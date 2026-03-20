@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Osazee's Web Proxy</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/scramjet/scramjet.codec.js"></script>
+  <script src="/scramjet/scramjet.worker.js"></script>
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Main UI -->
+  <div class="container" id="main" style="display:none;">
+    <div class="card">
+      <div class="logo">⬡</div>
+      <h1>Osazee's Web Proxy</h1>
+      <p class="subtitle">made by osazee</p>
+      <div class="input-row">
+        <input type="text" id="url-input" placeholder="Enter a URL or search..." autocomplete="off" />
+        <button id="go-btn" onclick="go()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+      <div id="error-box" class="error-box" style="display:none;">
+        ⚠ Something went wrong. Please contact osazee.
+      </div>
+    </div>
+
+    <!-- Pinned Sites -->
+    <div class="section">
+      <h2 class="section-label">📌 Pinned Sites</h2>
+      <div class="pins-grid" id="pins-grid"></div>
+    </div>
+
+    <!-- Games -->
+    <div class="section">
+      <h2 class="section-label">🎮 Games</h2>
+      <div class="games-grid" id="games-grid"></div>
+    </div>
+
+    <p class="footer">© Osazee's Web Proxy &nbsp;·&nbsp; <a href="/admin">Admin</a></p>
+  </div>
+
+  <!-- Nav loading bar -->
+  <div id="nav-loader" style="display:none;"><div class="bar"></div></div>
+
+  <!-- Game Player Modal -->
+  <div id="game-modal" class="game-modal" style="display:none;">
+    <div class="game-modal-inner">
+      <div class="game-modal-header">
+        <span id="game-modal-title" class="game-modal-title"></span>
+        <div class="game-modal-controls">
+          <button class="modal-btn" onclick="toggleFullscreen()" title="Fullscreen">
+            <svg id="fs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </button>
+          <button class="modal-btn close-btn" onclick="closeGame()" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="game-frame-wrap">
+        <iframe id="game-frame" allowfullscreen frameborder="0" allow="autoplay; fullscreen *; pointer-lock *; encrypted-media"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let scram;
+    let isFullscreen = false;
+
+    // ── GAMES LIST ──
+    // To add a game: go to the itch.io game page, view source, search "embed-upload"
+    // Copy the number after embed-upload/ and add it here
+    const GAMES = [
+      {
+        name: "Celeste Classic",
+        embedId: "1138550",
+        cover: "https://img.itch.zone/aW1nLzE3NDM2NjkucG5n/315x250%23c/bZHoSN.png",
+        genre: "Platformer"
+      },
+      {
+        name: "Slope",
+        embedId: "2483853",
+        cover: null,
+        genre: "Action"
+      },
+      {
+        name: "2048",
+        embedId: "149613",
+        cover: null,
+        genre: "Puzzle"
+      },
+      {
+        name: "Bullet Hell",
+        embedId: "1178796",
+        cover: null,
+        genre: "Shooter"
+      },
+      {
+        name: "Vampire Survivors Lite",
+        embedId: "1625625",
+        cover: null,
+        genre: "Roguelike"
+      },
+      {
+        name: "Dungeons of Glee",
+        embedId: "891088",
+        cover: null,
+        genre: "RPG"
+      }
+    ];
+
+    function getFavicon(url) {
+      const domain = new URL(url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    }
+
+    function renderPins(pins) {
+      const grid = document.getElementById("pins-grid");
+      grid.innerHTML = pins.map(p => `
+        <div class="pin" onclick="goTo('${p.url}')">
+          <img class="pin-icon-img" src="${getFavicon(p.url)}" alt="${p.name}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <div class="pin-icon-fallback" style="display:none;">🌐</div>
+          <span class="pin-name">${p.name}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderGames() {
+      const grid = document.getElementById("games-grid");
+      grid.innerHTML = GAMES.map((g, i) => `
+        <div class="game-card" onclick="openGame(${i})">
+          <div class="game-thumb">
+            ${g.cover
+              ? `<img src="${g.cover}" alt="${g.name}" onerror="this.parentElement.innerHTML='<div class=game-thumb-fallback>🎮</div>'" />`
+              : `<div class="game-thumb-fallback">🎮</div>`
+            }
+            <div class="game-play-overlay">
+              <div class="play-btn">▶</div>
+            </div>
+          </div>
+          <div class="game-info">
+            <span class="game-name">${g.name}</span>
+            <span class="game-genre">${g.genre}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function openGame(index) {
+      const game = GAMES[index];
+      const modal = document.getElementById("game-modal");
+      const frame = document.getElementById("game-frame");
+      const title = document.getElementById("game-modal-title");
+
+      title.textContent = game.name;
+      frame.src = `https://itch.io/embed-upload/${game.embedId}?color=0c0c0e`;
+      modal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeGame() {
+      const modal = document.getElementById("game-modal");
+      const frame = document.getElementById("game-frame");
+      frame.src = "";
+      modal.style.display = "none";
+      document.body.style.overflow = "";
+      if (isFullscreen) exitFullscreen();
+    }
+
+    function toggleFullscreen() {
+      const inner = document.querySelector(".game-modal-inner");
+      if (!isFullscreen) {
+        if (inner.requestFullscreen) inner.requestFullscreen();
+        else if (inner.webkitRequestFullscreen) inner.webkitRequestFullscreen();
+        isFullscreen = true;
+      } else {
+        exitFullscreen();
+      }
+    }
+
+    function exitFullscreen() {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      isFullscreen = false;
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement) isFullscreen = false;
+    });
+
+    document.getElementById("game-modal").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("game-modal")) closeGame();
+    });
+
+    window.addEventListener("load", async () => {
+      try {
+        scram = new ScramjetController({
+          prefix: "/scram/service/",
+          codec: "/scramjet/scramjet.codec.js",
+          worker: "/scramjet/scramjet.worker.js",
+          wispUrl: (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/",
+        });
+        scram.init();
+      } catch (e) {
+        showError();
+      }
+
+      try {
+        const res = await fetch("/api/pins");
+        const data = await res.json();
+        renderPins(data.pins);
+      } catch(e) {}
+
+      renderGames();
+
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("main").style.display = "flex";
+      }, 1200);
+    });
+
+    function goTo(url) {
+      document.getElementById("url-input").value = url;
+      go();
+    }
+
+    function go() {
+      document.getElementById("error-box").style.display = "none";
+      let val = document.getElementById("url-input").value.trim();
+      if (!val) return;
+      if (!val.startsWith("http://") && !val.startsWith("https://")) {
+        if (val.includes(".") && !val.includes(" ")) {
+          val = "https://" + val;
+        } else {
+          val = "https://www.google.com/search?q=" + encodeURIComponent(val);
+        }
+      }
+      try {
+        document.getElementById("nav-loader").style.display = "block";
+        location.href = scram.encodeUrl(val);
+      } catch (e) {
+        document.getElementById("nav-loader").style.display = "none";
+        showError();
+      }
+    }
+
+    function showError() {
+      document.getElementById("error-box").style.display = "flex";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("url-input").addEventListener("keydown", e => {
+        if (e.key === "Enter") go();
+      });
+    });
+  </script>
+</body>
+</html>
