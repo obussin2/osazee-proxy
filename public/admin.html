@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Osazee's Proxy</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+
+  <!-- Login screen -->
+  <div id="login-screen" class="container" style="display:none;">
+    <div class="card" style="max-width:380px;">
+      <div class="logo">🔐</div>
+      <h1 style="font-size:1.3rem;">Admin Login</h1>
+      <p class="subtitle">osazee's web proxy</p>
+      <div style="width:100%;display:flex;flex-direction:column;gap:0.6rem;margin-top:0.5rem;">
+        <input type="text" id="login-user" placeholder="Username" autocomplete="off"/>
+        <input type="password" id="login-pass" placeholder="Password"/>
+        <button class="full-btn" onclick="doLogin()">Login</button>
+      </div>
+      <div id="login-error" class="error-box" style="display:none;">⚠ Invalid credentials.</div>
+    </div>
+  </div>
+
+  <!-- Admin dashboard -->
+  <div id="dashboard" style="display:none;">
+    <div class="sidebar">
+      <div class="sidebar-logo">⬡</div>
+      <nav>
+        <a class="nav-link active" onclick="showTab('users')">👥 Users</a>
+        <a class="nav-link" onclick="showTab('add')">➕ Add User</a>
+      </nav>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+
+    <div class="main-panel">
+      <div class="top-bar">
+        <div>
+          <p id="greeting" class="greeting"></p>
+          <p class="hello-osazee">Hello Osazee! 👋</p>
+        </div>
+        <a href="/" class="back-link">← Back to Proxy</a>
+      </div>
+
+      <!-- Users tab -->
+      <div id="tab-users" class="tab-content">
+        <h2 class="section-title">All Users</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Username</th><th>Created</th><th>Action</th></tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add user tab -->
+      <div id="tab-add" class="tab-content" style="display:none;">
+        <h2 class="section-title">Add New User</h2>
+        <div class="card" style="max-width:400px;align-items:flex-start;gap:0.7rem;">
+          <input type="text" id="new-username" placeholder="Username" autocomplete="off"/>
+          <input type="password" id="new-password" placeholder="Password"/>
+          <button class="full-btn" onclick="addUser()">Create User</button>
+          <div id="add-msg" style="display:none;font-size:0.85rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h >= 5 && h < 12) return "Good morning ☀️";
+      if (h >= 12 && h < 17) return "Good afternoon 🌤";
+      if (h >= 17 && h < 21) return "Good evening 🌆";
+      return "Good night 🌙";
+    }
+
+    async function init() {
+      const res = await fetch("/api/me");
+      const me = await res.json();
+      if (me.loggedIn && me.isAdmin) {
+        showDashboard();
+      } else {
+        document.getElementById("login-screen").style.display = "flex";
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("dashboard").style.display = "flex";
+      document.getElementById("greeting").textContent = getGreeting();
+      loadUsers();
+    }
+
+    async function doLogin() {
+      const username = document.getElementById("login-user").value.trim();
+      const password = document.getElementById("login-pass").value;
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success && data.isAdmin) {
+        showDashboard();
+      } else {
+        document.getElementById("login-error").style.display = "flex";
+      }
+    }
+
+    async function doLogout() {
+      await fetch("/api/logout", { method: "POST" });
+      location.reload();
+    }
+
+    async function loadUsers() {
+      const res = await fetch("/api/users");
+      const users = await res.json();
+      const tbody = document.getElementById("users-tbody");
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.username}</td>
+          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td>${u.username === "admin" ? '<span class="badge">Protected</span>' : `<button class="del-btn" onclick="deleteUser('${u.username}')">Delete</button>`}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function addUser() {
+      const username = document.getElementById("new-username").value.trim();
+      const password = document.getElementById("new-password").value;
+      const msg = document.getElementById("add-msg");
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      msg.style.display = "block";
+      if (data.success) {
+        msg.style.color = "#4ade80";
+        msg.textContent = "✓ User created!";
+        document.getElementById("new-username").value = "";
+        document.getElementById("new-password").value = "";
+      } else {
+        msg.style.color = "#f87c8a";
+        msg.textContent = "✗ " + data.error;
+      }
+    }
+
+    async function deleteUser(username) {
+      if (!confirm(`Delete user "${username}"?`)) return;
+      await fetch("/api/users/" + username, { method: "DELETE" });
+      loadUsers();
+    }
+
+    function showTab(name) {
+      document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
+      document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+      document.getElementById("tab-" + name).style.display = "block";
+      event.target.classList.add("active");
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        if (document.getElementById("login-screen").style.display !== "none") doLogin();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
