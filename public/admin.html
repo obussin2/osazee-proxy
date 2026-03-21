@@ -4,12 +4,12 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin — Kairo</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
   <link rel="stylesheet" href="/admin.css"/>
 </head>
 <body>
 
-<!-- Login screen (shown if not authenticated) -->
 <div id="login-screen" class="login-page" style="display:none;">
   <div class="login-card">
     <div class="login-logo">Kairo</div>
@@ -24,7 +24,6 @@
   </div>
 </div>
 
-<!-- Dashboard -->
 <div id="dashboard" style="display:none;">
   <aside class="sidebar">
     <div class="sidebar-logo">Kairo</div>
@@ -59,7 +58,7 @@
     <div class="top-bar">
       <div>
         <div class="greeting" id="greeting-text"></div>
-        <div class="hello-name">Hello, Admin 👋</div>
+        <div class="hello-name" id="hello-name">Hello 👋</div>
       </div>
       <a href="/" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -76,7 +75,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Username</th><th>Created</th><th>Action</th></tr></thead>
+            <thead><tr><th>Display Name</th><th>Username</th><th>Created</th><th>Action</th></tr></thead>
             <tbody id="users-tbody"></tbody>
           </table>
         </div>
@@ -88,7 +87,8 @@
           <div class="section-title">Add New User</div>
         </div>
         <div class="form-card">
-          <input type="text" id="new-username" placeholder="Username" autocomplete="off" autocapitalize="none"/>
+          <input type="text" id="new-displayname" placeholder="Display Name (e.g. John)" autocomplete="off"/>
+          <input type="text" id="new-username" placeholder="Username (used to log in)" autocomplete="off" autocapitalize="none"/>
           <input type="password" id="new-password" placeholder="Password"/>
           <button class="full-btn" onclick="addUser()">Create User</button>
           <div class="msg" id="add-user-msg"></div>
@@ -116,9 +116,9 @@
         <div class="form-card">
           <input type="text" id="bm-name" placeholder="Name (e.g. Dark Reader)" autocomplete="off"/>
           <input type="text" id="bm-desc" placeholder="Description (optional)" autocomplete="off"/>
-          <textarea id="bm-code" placeholder="Paste the bookmarklet code here (the JS code, without 'javascript:')"></textarea>
+          <textarea id="bm-code" placeholder="Paste the bookmarklet JS code here (with or without 'javascript:')"></textarea>
           <div style="font-size:0.76rem;color:var(--muted);margin-top:-4px;">
-            Tip: paste the full <code style="color:var(--accent2);">javascript:</code> URL or just the raw JS code.
+            Tip: paste the full <code style="color:var(--accent2);">javascript:</code> URL or just the raw JS.
           </div>
           <button class="full-btn" onclick="addBookmarklet()">Save Bookmarklet</button>
           <div class="msg" id="add-bm-msg"></div>
@@ -142,16 +142,17 @@
     const res = await fetch("/api/me");
     const me = await res.json();
     if (me.loggedIn && me.isAdmin) {
-      showDashboard();
+      showDashboard(me.displayName || me.username);
     } else {
       document.getElementById("login-screen").style.display = "flex";
     }
   }
 
-  function showDashboard() {
+  function showDashboard(displayName) {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("dashboard").style.display = "flex";
     document.getElementById("greeting-text").textContent = getGreeting();
+    document.getElementById("hello-name").textContent = `Hello, ${displayName}! 👋`;
     loadUsers();
     loadBookmarklets();
   }
@@ -168,7 +169,7 @@
     });
     const data = await res.json();
     if (data.success && data.isAdmin) {
-      showDashboard();
+      showDashboard(data.displayName || username);
     } else {
       err.style.display = "flex";
     }
@@ -184,8 +185,9 @@
     const users = await res.json();
     document.getElementById("users-tbody").innerHTML = users.map(u => `
       <tr>
-        <td>${u.username}</td>
-        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+        <td>${u.displayName || u.username}</td>
+        <td style="color:var(--muted);">${u.username}</td>
+        <td style="color:var(--muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
         <td>
           ${u.username === "admin"
             ? '<span class="badge">Protected</span>'
@@ -197,19 +199,21 @@
   }
 
   async function addUser() {
+    const displayName = document.getElementById("new-displayname").value.trim();
     const username = document.getElementById("new-username").value.trim();
     const password = document.getElementById("new-password").value;
     const msg = document.getElementById("add-user-msg");
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, displayName })
     });
     const data = await res.json();
     msg.style.display = "block";
     if (data.success) {
       msg.className = "msg ok";
       msg.textContent = "✓ User created successfully";
+      document.getElementById("new-displayname").value = "";
       document.getElementById("new-username").value = "";
       document.getElementById("new-password").value = "";
     } else {
@@ -231,8 +235,8 @@
       ? items.map(b => `
           <tr>
             <td>${b.name}</td>
-            <td style="color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.description || "—"}</td>
-            <td>${new Date(b.createdAt).toLocaleDateString()}</td>
+            <td style="color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.description || "—"}</td>
+            <td style="color:var(--muted);">${new Date(b.createdAt).toLocaleDateString()}</td>
             <td><button class="del-btn" onclick="deleteBookmarklet('${b._id}')">Delete</button></td>
           </tr>
         `).join("")
@@ -244,12 +248,9 @@
     const description = document.getElementById("bm-desc").value.trim();
     let code = document.getElementById("bm-code").value.trim();
     const msg = document.getElementById("add-bm-msg");
-
-    // Strip "javascript:" prefix if pasted with it
     if (code.startsWith("javascript:")) {
       code = decodeURIComponent(code.slice("javascript:".length));
     }
-
     const res = await fetch("/api/bookmarklets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
