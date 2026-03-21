@@ -18,7 +18,7 @@ import { join, dirname } from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicPath = join(__dirname, "../public");
 
-// ── Step 1: Register models BEFORE connecting ────────────
+// ── Models (must be before connect) ─────────────────────
 const User = mongoose.model("User", new Schema({
   username:     { type: String, unique: true },
   password:     String,
@@ -34,26 +34,25 @@ const Bookmarklet = mongoose.model("Bookmarklet", new Schema({
   createdAt:   { type: Date, default: Date.now }
 }));
 
-// ── Step 2: Connect to MongoDB ───────────────────────────
+// ── Connect ──────────────────────────────────────────────
 await mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10 });
 console.log("MongoDB connected");
 
-// ── Step 3: Seed admin (models are registered now) ───────
-const existing = await User.findOne({ username: "admin" });
-if (!existing) {
+// ── Seed admin ───────────────────────────────────────────
+if (!(await User.findOne({ username: "admin" }))) {
   const hash = await bcrypt.hash("stu8976@admin", 10);
   await User.create({ username: "admin", password: hash, displayName: "Osazee" });
   console.log("Admin seeded");
 }
 
-// ── Wisp config ──────────────────────────────────────────
+// ── Wisp ─────────────────────────────────────────────────
 logging.set_level(logging.NONE);
 Object.assign(wisp.options, {
   allow_udp_streams: false,
   dns_servers: ["1.1.1.3", "1.0.0.3"],
 });
 
-// ── Session middleware ───────────────────────────────────
+// ── Session ──────────────────────────────────────────────
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "kairo-secret",
   resave: false,
@@ -61,6 +60,13 @@ const sessionMiddleware = session({
   store: connectMongo.create({ mongoUrl: process.env.MONGO_URI }),
   cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
 });
+
+// Helper: save session and wait for it to persist to MongoDB
+function saveSession(req) {
+  return new Promise((resolve, reject) =>
+    req.raw.session.save(err => err ? reject(err) : resolve())
+  );
+}
 
 // ── Fastify ──────────────────────────────────────────────
 const fastify = Fastify({
@@ -86,36 +92,46 @@ const fastify = Fastify({
   },
 });
 
-// JSON body parser
 fastify.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
   try { done(null, JSON.parse(body)); } catch (e) { done(e); }
 });
 
-// ── Compression ──────────────────────────────────────────
 await fastify.register(fastifyCompress, { global: true, encodings: ["gzip", "deflate"] });
 
-// ── Static assets ────────────────────────────────────────
-const LONG_CACHE = 7 * 24 * 60 * 60 * 1000;
-
-fastify.register(fastifyStatic, {
-  root: scramjetPath, prefix: "/scram/",
-  decorateReply: true, maxAge: LONG_CACHE, immutable: true,
-});
-fastify.register(fastifyStatic, {
-  root: libcurlPath, prefix: "/libcurl/",
-  decorateReply: false, maxAge: LONG_CACHE, immutable: true,
-});
-fastify.register(fastifyStatic, {
-  root: baremuxPath, prefix: "/baremux/",
-  decorateReply: false, maxAge: LONG_CACHE, immutable: true,
-});
-fastify.register(fastifyStatic, {
+// ── Static files — PUBLIC MUST BE FIRST ─────────────────
+// Fastify's sendFile() uses the first registered root.
+// Register public/ first so reply.sendFile("index.html") works.
+await fastify.register(fastifyStatic, {
   root: publicPath,
-  decorateReply: false, maxAge: 60 * 1000,
+  decorateReply: true,   // <-- this one adds sendFile()
+  maxAge: 60 * 1000,
+});
+
+// Additional roots with decorateReply: false
+await fastify.register(fastifyStatic, {
+  root: scramjetPath,
+  prefix: "/scram/",
+  decorateReply: false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  immutable: true,
+});
+await fastify.register(fastifyStatic, {
+  root: libcurlPath,
+  prefix: "/libcurl/",
+  decorateReply: false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  immutable: true,
+});
+await fastify.register(fastifyStatic, {
+  root: baremuxPath,
+  prefix: "/baremux/",
+  decorateReply: false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  immutable: true,
 });
 
 // ── Auth helpers ─────────────────────────────────────────
-const loggedIn = (req) => !!req.raw.session?.username;
+const loggedIn  = (req) => !!req.raw.session?.username;
 const adminOnly = (req) => !!req.raw.session?.isAdmin;
 
 // ── Page routes ──────────────────────────────────────────
@@ -148,6 +164,10 @@ fastify.post("/api/login", async (req) => {
   req.raw.session.username = username;
   req.raw.session.isAdmin = username === "admin";
   req.raw.session.displayName = user.displayName || username;
+  // Wait for session to be written to MongoDB before telling the
+  // client to redirect — otherwise the next request arrives before
+  // the session exists and the auth check fails
+  await saveSession(req);
   return { success: true, isAdmin: req.raw.session.isAdmin, displayName: req.raw.session.displayName };
 });
 
