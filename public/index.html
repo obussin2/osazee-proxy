@@ -6,21 +6,26 @@
   <title>Kairo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
+
+  <!-- Scramjet + BareMux loaded first -->
+  <script src="/scram/scramjet.all.js"></script>
+  <script src="/baremux/index.js"></script>
+
   <style>
     .pin img {
       width: 18px; height: 18px;
-      /* CSS filter turns any colored SVG white */
       filter: brightness(0) invert(1);
-      opacity: 0.82;
-      transition: opacity 0.15s;
+      opacity: 0.82; transition: opacity 0.15s;
     }
     .pin:hover img { opacity: 1; }
 
     .proxy-url-input {
-      flex: 1; background: rgba(19,22,27,0.8); border: 1px solid #1c2028;
-      border-radius: 8px; color: #8a94a0; font-size: 0.78rem;
-      font-family: 'DM Sans', sans-serif; padding: 4px 10px;
-      outline: none; min-width: 0; transition: border-color 0.15s, color 0.15s;
+      flex: 1; background: rgba(19,22,27,0.8);
+      border: 1px solid #1c2028; border-radius: 8px;
+      color: #8a94a0; font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      padding: 4px 10px; outline: none; min-width: 0;
+      transition: border-color 0.15s, color 0.15s;
     }
     .proxy-url-input:focus { border-color: #7b6ef6; color: #e8ecf0; }
 
@@ -34,16 +39,18 @@
       background: rgba(14,16,20,0.96); border: 1px solid #252b35;
       border-radius: 10px; padding: 8px 14px; font-size: 0.82rem;
       color: #8a94a0; cursor: pointer; white-space: nowrap;
-      backdrop-filter: blur(12px); transition: border-color 0.15s, color 0.15s;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.15s, color 0.15s;
       font-family: 'DM Sans', sans-serif;
     }
     .bm-tray-item:hover { border-color: #7b6ef6; color: #e8ecf0; }
     #bm-toggle {
       position: fixed; bottom: 14px; right: 16px; z-index: 601;
-      width: 40px; height: 40px; border-radius: 50%; background: #7b6ef6;
-      border: none; cursor: pointer; display: none;
-      align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(123,110,246,0.4); transition: background 0.15s;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #7b6ef6; border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(123,110,246,0.4);
+      transition: background 0.15s;
     }
     #bm-toggle.visible { display: flex; }
     #bm-toggle:hover { background: #9d92fa; }
@@ -54,13 +61,15 @@
     var _uiShown = false;
     function showUI() {
       if (_uiShown) return; _uiShown = true;
-      var l = document.getElementById("loader"), h = document.getElementById("home");
+      var l = document.getElementById("loader");
+      var h = document.getElementById("home");
       if (l) l.style.display = "none";
       if (h) h.style.display = "block";
     }
+    // Nuclear fallback — always show UI after 5s
     setTimeout(showUI, 5000);
-    window.addEventListener("error", function(e){ console.error("[Kairo]", e.message); showUI(); });
-    window.addEventListener("unhandledrejection", function(e){ console.error("[Kairo]", e.reason); showUI(); });
+    window.addEventListener("error", function(e) { console.error("[Kairo]", e.message); showUI(); });
+    window.addEventListener("unhandledrejection", function(e) { console.error("[Kairo]", e.reason); showUI(); });
   </script>
 </head>
 <body>
@@ -97,7 +106,9 @@
         <div class="hero-sub">Private Browsing</div>
       </div>
       <div class="search-wrap">
-        <input type="text" id="url-input" class="search-input" placeholder="Search or enter a URL…" autocomplete="off" autocorrect="off" spellcheck="false"/>
+        <input type="text" id="url-input" class="search-input"
+          placeholder="Search or enter a URL…"
+          autocomplete="off" autocorrect="off" spellcheck="false"/>
         <button class="search-go" id="go-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
@@ -121,7 +132,7 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy view -->
+<!-- Proxy view — scramjet frame fills screen -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
   <div class="proxy-bar">
     <button class="proxy-back" id="proxy-back-btn" title="Back">
@@ -138,12 +149,14 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
   </div>
-  <iframe id="uv-frame" style="flex:1;border:none;width:100%;display:block;" allow="fullscreen"></iframe>
+  <div id="frame-container" style="flex:1;overflow:hidden;position:relative;"></div>
 </div>
 
-<!-- Bookmarklet toggle -->
+<!-- Bookmarklet toggle (shows in proxy view) -->
 <button id="bm-toggle" title="Bookmarklets">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
+  </svg>
 </button>
 <div id="bm-tray"></div>
 
@@ -154,54 +167,66 @@
   <button id="signin-again-btn" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;">Sign in again</button>
 </div>
 
-<script src="/baremux/index.js"></script>
-<script src="/uv/uv.bundle.js"></script>
-<script src="/uv/uv.config.js"></script>
 <script src="/register-sw.js"></script>
 <script src="/search.js"></script>
 
 <script>
 var WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
+var scramjet = null;
 var connection = null;
+var currentFrame = null;
 var swReady = false;
 var bookmarklets = [];
 
-// ── Init BareMux — called at boot AND before every navigation ─
-function getConnection() {
-  if (!connection) {
-    try {
-      connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-    } catch(e) {
-      console.warn("[Kairo] BareMux init failed:", e);
-      return null;
+// ── Init scramjet ─────────────────────────────────────────
+function initScramjet() {
+  try {
+    if (typeof $scramjetLoadController !== "function") {
+      console.warn("[Kairo] $scramjetLoadController not found");
+      return;
     }
+    var ctrl = $scramjetLoadController();
+    scramjet = new ctrl.ScramjetController({
+      files: {
+        wasm: "/scram/scramjet.wasm.wasm",
+        all:  "/scram/scramjet.all.js",
+        sync: "/scram/scramjet.sync.js",
+      },
+    });
+    scramjet.init();
+    console.log("[Kairo] Scramjet ready ✓");
+  } catch(e) { console.error("[Kairo] Scramjet init:", e); }
+}
+
+// ── Init BareMux ──────────────────────────────────────────
+function getConn() {
+  if (!connection) {
+    try { connection = new BareMux.BareMuxConnection("/baremux/worker.js"); }
+    catch(e) { console.warn("[Kairo] BareMux:", e); return null; }
   }
   return connection;
 }
 
 function ensureTransport() {
-  var conn = getConnection();
+  var conn = getConn();
   if (!conn) return Promise.resolve();
   return conn.getTransport().then(function(t) {
-    if (t !== "/epoxy/index.mjs") {
-      return conn.setTransport("/epoxy/index.mjs", [{ wisp: WISP_URL }]);
+    if (t !== "/libcurl/index.mjs") {
+      return conn.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
     }
-  }).catch(function(e) {
-    console.warn("[Kairo] Transport error:", e);
-  });
+  }).catch(function(e) { console.warn("[Kairo] Transport:", e); });
 }
 
-// ── SW ───────────────────────────────────────────────────
+// ── SW ────────────────────────────────────────────────────
 function ensureSW() {
   if (swReady) return Promise.resolve();
   if (typeof registerSW !== "function") return Promise.resolve();
-  return registerSW().then(function() { swReady = true; }).catch(function(e) {
-    showError("Service worker failed: " + e.message);
-    throw e;
-  });
+  return registerSW()
+    .then(function() { swReady = true; })
+    .catch(function(e) { showError("SW failed: " + e.message); throw e; });
 }
 
-// ── Navigate ─────────────────────────────────────────────
+// ── Navigate ──────────────────────────────────────────────
 function go() {
   hideError();
   var val = document.getElementById("url-input").value.trim();
@@ -209,10 +234,12 @@ function go() {
   if (typeof search === "function") val = search(val, "https://www.google.com/search?q=%s");
   else if (!val.startsWith("http")) val = val.includes(".") ? "https://" + val : "https://www.google.com/search?q=" + encodeURIComponent(val);
 
+  if (!scramjet) { showError("Proxy not ready — please reload the page"); return; }
+
   ensureSW()
     .then(ensureTransport)
     .then(function() { openProxy(val); })
-    .catch(function(e) { showError(e.message || "Failed to connect"); });
+    .catch(function(e) { showError(e.message || "Connection failed"); });
 }
 
 function goTo(url) {
@@ -221,22 +248,37 @@ function goTo(url) {
 }
 
 function openProxy(url) {
-  var frame = document.getElementById("uv-frame");
-  frame.src = __uv$config.prefix + __uv$config.encodeUrl(url);
-  document.getElementById("proxy-url-bar").value = url;
-  document.getElementById("proxy-view").style.display = "flex";
-  document.getElementById("home").style.display = "none";
-  document.getElementById("bm-toggle").classList.add("visible");
-  document.getElementById("bm-tray").classList.remove("open");
-  saveServerCookies();
+  // Remove old frame
+  if (currentFrame) {
+    try { currentFrame.frame.remove(); } catch(e) {}
+    currentFrame = null;
+  }
+  try {
+    var container = document.getElementById("frame-container");
+    container.innerHTML = "";
+    var frame = scramjet.createFrame();
+    frame.frame.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
+    container.appendChild(frame.frame);
+    currentFrame = frame;
+    document.getElementById("proxy-url-bar").value = url;
+    document.getElementById("proxy-view").style.display = "flex";
+    document.getElementById("home").style.display = "none";
+    document.getElementById("bm-toggle").classList.add("visible");
+    document.getElementById("bm-tray").classList.remove("open");
+    frame.go(url);
+    saveServerCookies();
+  } catch(e) { showError("Failed to open: " + e.message); }
 }
 
 function closeProxy() {
+  if (currentFrame) {
+    try { currentFrame.frame.remove(); } catch(e) {}
+    currentFrame = null;
+  }
   document.getElementById("proxy-view").style.display = "none";
   document.getElementById("home").style.display = "block";
   document.getElementById("bm-toggle").classList.remove("visible");
   document.getElementById("bm-tray").classList.remove("open");
-  document.getElementById("uv-frame").src = "about:blank";
 }
 
 function showError(msg) {
@@ -245,48 +287,40 @@ function showError(msg) {
 }
 function hideError() { document.getElementById("error-toast").style.display = "none"; }
 
-// ── Proxy bar ────────────────────────────────────────────
+// ── Proxy bar ─────────────────────────────────────────────
 document.getElementById("proxy-back-btn").addEventListener("click", function() {
-  try { document.getElementById("uv-frame").contentWindow.history.back(); } catch(e) {}
+  try { currentFrame && currentFrame.frame.contentWindow.history.back(); } catch(e) {}
 });
 document.getElementById("proxy-fwd-btn").addEventListener("click", function() {
-  try { document.getElementById("uv-frame").contentWindow.history.forward(); } catch(e) {}
+  try { currentFrame && currentFrame.frame.contentWindow.history.forward(); } catch(e) {}
 });
 document.getElementById("proxy-reload-btn").addEventListener("click", function() {
-  try { document.getElementById("uv-frame").contentWindow.location.reload(); } catch(e) {}
+  try { currentFrame && currentFrame.frame.contentWindow.location.reload(); } catch(e) {}
 });
 document.getElementById("proxy-home-btn").addEventListener("click", closeProxy);
 document.getElementById("proxy-url-bar").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    var val = typeof search === "function" ? search(this.value.trim(), "https://www.google.com/search?q=%s") : this.value.trim();
-    ensureTransport().then(function() {
-      document.getElementById("uv-frame").src = __uv$config.prefix + __uv$config.encodeUrl(val);
-    });
-  }
-});
-document.getElementById("uv-frame").addEventListener("load", function() {
-  try {
-    var src = this.src;
-    if (!src || src === "about:blank") return;
-    var encoded = src.replace(location.origin + __uv$config.prefix, "");
-    var decoded = __uv$config.decodeUrl(encoded);
-    if (decoded && decoded !== "about:blank") document.getElementById("proxy-url-bar").value = decoded;
-  } catch(e) {}
+  if (e.key !== "Enter") return;
+  var val = typeof search === "function"
+    ? search(this.value.trim(), "https://www.google.com/search?q=%s")
+    : this.value.trim();
+  ensureTransport().then(function() {
+    if (currentFrame) currentFrame.go(val);
+    document.getElementById("proxy-url-bar").value = val;
+  });
 });
 
-// ── Devtools Ctrl+Shift+Alt+I ────────────────────────────
+// ── Devtools Ctrl+Shift+Alt+I ─────────────────────────────
 document.addEventListener("keydown", function(e) {
   if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === "I" || e.key === "i")) {
     e.preventDefault();
-    var frame = document.getElementById("uv-frame");
-    if (frame.src && frame.src !== "about:blank") {
-      window.open(frame.src, "_blank");
-      setTimeout(function() { alert("Page opened in new tab — right-click → Inspect to use DevTools."); }, 300);
+    if (currentFrame && currentFrame.frame) {
+      window.open(currentFrame.frame.src, "_blank");
+      setTimeout(function() { alert("Right-click the new tab → Inspect to open DevTools."); }, 400);
     }
   }
 });
 
-// ── Bookmarklets tray ────────────────────────────────────
+// ── Bookmarklet tray ──────────────────────────────────────
 document.getElementById("bm-toggle").addEventListener("click", function() {
   document.getElementById("bm-tray").classList.toggle("open");
 });
@@ -300,65 +334,66 @@ function renderBookmarkletTray() {
   tray.innerHTML = bookmarklets.map(function(b, i) {
     return '<div class="bm-tray-item" data-i="' + i + '">' + b.name + '</div>';
   }).join("");
-  tray.querySelectorAll(".bm-tray-item[data-i]").forEach(function(el) {
+  tray.querySelectorAll("[data-i]").forEach(function(el) {
     el.addEventListener("click", function() {
       var b = bookmarklets[parseInt(this.getAttribute("data-i"))];
-      if (!b) return;
-      var frame = document.getElementById("uv-frame");
-      try { frame.contentWindow.eval(b.code); }
-      catch(e) { console.warn("Bookmarklet inject failed:", e); }
+      if (!b || !currentFrame) return;
+      try { currentFrame.frame.contentWindow.eval(b.code); }
+      catch(e) { console.warn("Bookmarklet:", e); }
       document.getElementById("bm-tray").classList.remove("open");
     });
   });
 }
 
-// ── Pins — use simpleicons.org SVG directly ──────────────
-// Using unpkg CDN to serve official Simple Icons SVGs then CSS filter makes them white
-var ICON_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' stroke='white' stroke-width='1.5' fill='none'/%3E%3C/svg%3E";
-
-function iconUrl(slug) {
-  // Use unpkg to get official Simple Icons SVGs — reliable, no CORS issues
-  return "https://unpkg.com/simple-icons@latest/icons/" + slug + ".svg";
-}
-
+// ── Pins ──────────────────────────────────────────────────
 function loadPins() {
-  fetch("/api/pins").then(function(r){ return r.json(); }).then(function(data) {
+  fetch("/api/pins").then(function(r) { return r.json(); }).then(function(data) {
     document.getElementById("pins-grid").innerHTML = (data.pins || []).map(function(p) {
       return '<div class="pin" onclick="goTo(\'' + p.url + '\')" title="' + p.name + '">' +
-        '<img src="' + iconUrl(p.icon) + '" alt="' + p.name + '" loading="lazy"' +
-        ' onerror="this.src=\'' + ICON_FALLBACK + '\'"' +
+        '<img src="https://unpkg.com/simple-icons@latest/icons/' + p.icon + '.svg"' +
+        ' alt="' + p.name + '" loading="lazy"' +
+        ' onerror="this.style.opacity=\'0.3\'"' +
         '/></div>';
     }).join("");
-  }).catch(function(){});
+  }).catch(function() {});
 }
 
-// ── Bookmarklets ─────────────────────────────────────────
+// ── Bookmarklets ──────────────────────────────────────────
 function loadBookmarklets() {
-  fetch("/api/bookmarklets").then(function(r){ return r.json(); }).then(function(items) {
+  fetch("/api/bookmarklets").then(function(r) { return r.json(); }).then(function(items) {
     bookmarklets = items || [];
     renderBookmarkletTray();
-  }).catch(function(){});
+  }).catch(function() {});
 }
 
-// ── Cookie sync ──────────────────────────────────────────
+// ── Cookie sync ───────────────────────────────────────────
 function loadServerCookies() {
-  return fetch("/api/cookies").then(function(r){ return r.json(); }).then(function(data) {
+  return fetch("/api/cookies").then(function(r) { return r.json(); }).then(function(data) {
     if (!data.cookies) return;
     data.cookies.split("||").forEach(function(entry) {
       var idx = entry.indexOf("=:=");
       if (idx === -1) return;
-      document.cookie = decodeURIComponent(entry.slice(0, idx)) + "=" + decodeURIComponent(entry.slice(idx + 3)) + "; path=/; SameSite=Lax";
+      document.cookie = decodeURIComponent(entry.slice(0, idx)) + "=" +
+        decodeURIComponent(entry.slice(idx + 3)) + "; path=/; SameSite=Lax";
     });
-  }).catch(function(){});
+  }).catch(function() {});
 }
 
 function saveServerCookies() {
   try {
-    var encoded = document.cookie.split(";").map(function(c){ return c.trim(); }).filter(Boolean).map(function(c) {
-      var i = c.indexOf("="); return i === -1 ? null : encodeURIComponent(c.slice(0,i).trim()) + "=:=" + encodeURIComponent(c.slice(i+1).trim());
-    }).filter(Boolean).join("||");
+    var encoded = document.cookie.split(";").map(function(c) { return c.trim(); })
+      .filter(Boolean).map(function(c) {
+        var i = c.indexOf("=");
+        return i === -1 ? null :
+          encodeURIComponent(c.slice(0, i).trim()) + "=:=" + encodeURIComponent(c.slice(i + 1).trim());
+      }).filter(Boolean).join("||");
     if (!encoded) return;
-    fetch("/api/cookies", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ cookies: encoded }), keepalive: true });
+    fetch("/api/cookies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cookies: encoded }),
+      keepalive: true
+    });
   } catch(e) {}
 }
 
@@ -373,7 +408,7 @@ function logout() {
   fetch("/api/logout", { method: "POST" }).then(function() { location.href = "/login.html"; });
 }
 
-// ── Inactivity ───────────────────────────────────────────
+// ── Inactivity ────────────────────────────────────────────
 var inactivityTimer;
 function resetTimer() {
   clearTimeout(inactivityTimer);
@@ -383,32 +418,36 @@ function resetTimer() {
     });
   }, 20 * 60 * 1000);
 }
-["mousemove","keydown","click","scroll","touchstart"].forEach(function(e) {
+["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(function(e) {
   document.addEventListener(e, resetTimer, { passive: true });
 });
 
-// ── Wire buttons ─────────────────────────────────────────
+// ── Wire buttons ──────────────────────────────────────────
 document.getElementById("go-btn").addEventListener("click", go);
 document.getElementById("logout-btn").addEventListener("click", logout);
 document.getElementById("reset-btn").addEventListener("click", clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click", function() { location.href = "/login.html"; });
 document.getElementById("url-input").addEventListener("keydown", function(e) { if (e.key === "Enter") go(); });
 
-// ── Boot ─────────────────────────────────────────────────
-fetch("/api/me").then(function(r){ return r.json(); }).then(function(me) {
+// ── Boot ──────────────────────────────────────────────────
+fetch("/api/me").then(function(r) { return r.json(); }).then(function(me) {
   if (!me.loggedIn) { location.href = "/login.html"; return; }
   if (me.displayName) document.getElementById("greeting-name").textContent = "Hi, " + me.displayName + " 👋";
   if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
 
-  // Pre-warm transport in background — don't block UI on it
-  ensureTransport().catch(function(){});
+  initScramjet();
 
-  Promise.all([loadServerCookies(), loadPins(), loadBookmarklets()]).then(function() {
-    resetTimer();
-    setInterval(saveServerCookies, 15000);
-    window.addEventListener("beforeunload", saveServerCookies);
-    showUI();
-  }).catch(function() { showUI(); });
+  // Pre-warm transport in background
+  ensureTransport().catch(function() {});
+
+  Promise.all([loadServerCookies(), loadPins(), loadBookmarklets()])
+    .then(function() {
+      resetTimer();
+      setInterval(saveServerCookies, 15000);
+      window.addEventListener("beforeunload", saveServerCookies);
+      showUI();
+    })
+    .catch(function() { showUI(); });
 }).catch(function() { location.href = "/login.html"; });
 </script>
 </body>
