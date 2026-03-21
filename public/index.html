@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kairo</title>
+  <!-- K favicon as inline SVG data URI -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
   <script src="/scramjet/scramjet.bundle.js"></script>
 </head>
@@ -22,15 +24,15 @@
     <a class="nav-brand" href="/">Kairo</a>
     <div class="nav-actions">
       <a class="nav-btn" href="/admin" id="admin-link" style="display:none;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Admin
       </a>
-      <button class="nav-btn" onclick="clearCookies()" title="Clear all saved sessions">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
+      <button class="nav-btn" onclick="clearCookies()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
         Reset
       </button>
       <button class="nav-btn" onclick="logout()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Logout
       </button>
     </div>
@@ -39,7 +41,7 @@
   <main class="page">
 
     <section class="hero">
-      <div>
+      <div style="text-align:center;">
         <div class="hero-heading">Kairo</div>
         <div class="hero-sub">Private Browsing</div>
       </div>
@@ -54,13 +56,13 @@
           spellcheck="false"
         />
         <button class="search-go" onclick="go()" aria-label="Go">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
       </div>
       <div class="error-toast" id="error-toast">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
         Something went wrong. Please try again.
@@ -85,20 +87,41 @@
 
 </div>
 
+<!-- Inactivity timeout overlay -->
+<div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.95);z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#e8ecf0;">Session expired</div>
+  <div style="font-size:0.85rem;color:#5a6370;">You were inactive for 20 minutes</div>
+  <button onclick="location.href='/login.html'" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign in again</button>
+</div>
+
 <script>
   let scram = null;
 
-  // ── Cross-device cookie sync ───────────────────────────
-  // On load: fetch saved cookies from MongoDB and inject them
-  // Every 15s + on unload: push current cookies back to MongoDB
-  // Reset button: wipe both local and server-side
+  // ── Inactivity auto-logout (20 minutes) ────────────────
+  const INACTIVE_MS = 20 * 60 * 1000;
+  let inactivityTimer;
 
+  function resetTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(showTimeout, INACTIVE_MS);
+  }
+
+  async function showTimeout() {
+    await fetch("/api/logout", { method: "POST" });
+    const overlay = document.getElementById("timeout-overlay");
+    overlay.style.display = "flex";
+  }
+
+  ["mousemove","keydown","click","scroll","touchstart"].forEach(e =>
+    document.addEventListener(e, resetTimer, { passive: true })
+  );
+
+  // ── Cookie sync ────────────────────────────────────────
   async function loadServerCookies() {
     try {
       const res = await fetch("/api/cookies");
       const data = await res.json();
       if (!data.cookies) return;
-      // Inject each saved cookie back into the browser
       data.cookies.split("||").forEach(entry => {
         try {
           const [name, value] = entry.split("=:=");
@@ -107,13 +130,11 @@
           }
         } catch(e) {}
       });
-      console.log("[Kairo] Cookies restored from server ✓");
     } catch(e) {}
   }
 
   async function saveServerCookies() {
     try {
-      // Encode cookies as "name=:=value||name=:=value" to survive JSON serialisation
       const encoded = document.cookie
         .split(";")
         .map(c => c.trim())
@@ -121,15 +142,11 @@
         .map(c => {
           const idx = c.indexOf("=");
           if (idx === -1) return null;
-          const name  = encodeURIComponent(c.slice(0, idx).trim());
-          const value = encodeURIComponent(c.slice(idx + 1).trim());
-          return `${name}=:=${value}`;
+          return `${encodeURIComponent(c.slice(0,idx).trim())}=:=${encodeURIComponent(c.slice(idx+1).trim())}`;
         })
         .filter(Boolean)
         .join("||");
-
       if (!encoded) return;
-
       await fetch("/api/cookies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,12 +158,10 @@
 
   async function clearCookies() {
     try {
-      // Wipe browser cookies
       document.cookie.split(";").forEach(c => {
         const name = c.trim().split("=")[0];
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
       });
-      // Wipe server-side
       await fetch("/api/cookies", { method: "DELETE" });
       alert("All saved sessions cleared across all your devices.");
     } catch(e) {}
@@ -162,8 +177,13 @@
     } catch(e) {}
   }
 
-  // ── Scramjet init ──────────────────────────────────────
+  // ── Scramjet init — robust with retry ─────────────────
   function initScramjet() {
+    // Check the bundle actually loaded
+    if (typeof ScramjetController === "undefined") {
+      console.error("[Kairo] ScramjetController not found — bundle may not have loaded");
+      return false;
+    }
     try {
       scram = new ScramjetController({
         prefix: "/scram/service/",
@@ -173,8 +193,11 @@
                  "://" + location.host + "/wisp/",
       });
       scram.init();
+      console.log("[Kairo] Scramjet initialized ✓");
+      return true;
     } catch(e) {
-      console.warn("[Kairo] Scramjet init error:", e);
+      console.error("[Kairo] Scramjet init error:", e);
+      return false;
     }
   }
 
@@ -190,11 +213,13 @@
       val = "https://" + val;
     }
 
-    if (!scram) { showError(); return; }
+    if (!scram) {
+      // Try reinitialising before giving up
+      if (!initScramjet()) { showError(); return; }
+    }
 
     try {
       document.getElementById("nav-loader").style.display = "block";
-      // Save cookies before navigating away
       saveServerCookies();
       location.href = scram.encodeUrl(val);
     } catch(e) {
@@ -263,14 +288,8 @@
 
   window.addEventListener("load", async () => {
     initScramjet();
-
-    // Restore server cookies BEFORE scramjet starts routing
     await loadServerCookies();
-
-    // Save cookies every 15 seconds
     setInterval(saveServerCookies, 15000);
-
-    // Save on page unload (keepalive ensures it completes even as page closes)
     window.addEventListener("beforeunload", saveServerCookies);
 
     const [me] = await Promise.all([
@@ -282,6 +301,9 @@
     if (me.isAdmin) {
       document.getElementById("admin-link").style.display = "inline-flex";
     }
+
+    // Start inactivity timer
+    resetTimer();
 
     setTimeout(() => {
       document.getElementById("loader").style.display = "none";
