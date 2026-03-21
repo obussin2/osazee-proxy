@@ -12,16 +12,35 @@ async function registerSW() {
     throw new Error("Your browser doesn't support service workers.");
   }
 
-  // Clear ALL old service worker registrations (scramjet etc)
+  // Unregister any old stale service workers (scramjet etc)
   const existing = await navigator.serviceWorker.getRegistrations();
   for (const reg of existing) {
-    const swUrl = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || "";
-    if (!swUrl.endsWith(UV_SW)) {
-      console.log("[Kairo] Removing old SW:", swUrl);
+    const url = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || "";
+    if (!url.includes("/uv/sw.js")) {
+      console.log("[Kairo] Removing stale SW:", url);
       await reg.unregister();
     }
   }
 
-  // Register UV service worker
-  await navigator.serviceWorker.register(UV_SW, { scope: "/uv/" });
+  // Register UV SW
+  const reg = await navigator.serviceWorker.register(UV_SW, { scope: "/uv/" });
+
+  // Wait for it to be active and controlling
+  await new Promise((resolve) => {
+    if (reg.active) { resolve(); return; }
+    const sw = reg.installing || reg.waiting;
+    if (sw) {
+      sw.addEventListener("statechange", function handler() {
+        if (sw.state === "activated") {
+          sw.removeEventListener("statechange", handler);
+          resolve();
+        }
+      });
+    } else {
+      // Already installed — wait for controllerchange
+      navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+    }
+    // Fallback — don't wait forever
+    setTimeout(resolve, 3000);
+  });
 }
