@@ -1,5 +1,5 @@
 {
-  "name": "osazee-proxy",
+  "name": "kairo-proxy",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,11 +7,12 @@
   },
   "dependencies": {
     "@mercuryworkshop/scramjet": "latest",
-    "wisp-server-node": "latest",
+    "@mercuryworkshop/wisp-js": "latest",
     "express": "latest",
-    "mongoose": "latest",
+    "mongoose": "^8.0.0",
     "bcryptjs": "latest",
     "express-session": "latest",
-    "dotenv": "latest"
+    "dotenv": "latest",
+    "compression": "latest"
   }
 }
