@@ -7,52 +7,46 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
   <style>
-    /* Bookmarklet tray that floats over the proxy frame */
+    .pin img {
+      width: 18px; height: 18px;
+      /* CSS filter turns any colored SVG white */
+      filter: brightness(0) invert(1);
+      opacity: 0.82;
+      transition: opacity 0.15s;
+    }
+    .pin:hover img { opacity: 1; }
+
+    .proxy-url-input {
+      flex: 1; background: rgba(19,22,27,0.8); border: 1px solid #1c2028;
+      border-radius: 8px; color: #8a94a0; font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif; padding: 4px 10px;
+      outline: none; min-width: 0; transition: border-color 0.15s, color 0.15s;
+    }
+    .proxy-url-input:focus { border-color: #7b6ef6; color: #e8ecf0; }
+
     #bm-tray {
-      position: fixed;
-      bottom: 60px;
-      right: 16px;
-      z-index: 600;
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 300px;
-      overflow-y: auto;
+      position: fixed; bottom: 60px; right: 16px; z-index: 600;
+      display: none; flex-direction: column; gap: 6px;
+      max-height: 300px; overflow-y: auto;
     }
     #bm-tray.open { display: flex; }
     .bm-tray-item {
-      background: rgba(14,16,20,0.95);
-      border: 1px solid #252b35;
-      border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 0.82rem;
-      color: #8a94a0;
-      cursor: pointer;
-      white-space: nowrap;
-      backdrop-filter: blur(12px);
-      transition: border-color 0.15s, color 0.15s;
+      background: rgba(14,16,20,0.96); border: 1px solid #252b35;
+      border-radius: 10px; padding: 8px 14px; font-size: 0.82rem;
+      color: #8a94a0; cursor: pointer; white-space: nowrap;
+      backdrop-filter: blur(12px); transition: border-color 0.15s, color 0.15s;
       font-family: 'DM Sans', sans-serif;
     }
     .bm-tray-item:hover { border-color: #7b6ef6; color: #e8ecf0; }
     #bm-toggle {
-      position: fixed;
-      bottom: 14px;
-      right: 16px;
-      z-index: 601;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #7b6ef6;
-      border: none;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(123,110,246,0.4);
-      transition: background 0.15s, transform 0.15s;
+      position: fixed; bottom: 14px; right: 16px; z-index: 601;
+      width: 40px; height: 40px; border-radius: 50%; background: #7b6ef6;
+      border: none; cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(123,110,246,0.4); transition: background 0.15s;
     }
     #bm-toggle.visible { display: flex; }
-    #bm-toggle:hover { background: #9d92fa; transform: scale(1.08); }
+    #bm-toggle:hover { background: #9d92fa; }
     #bm-toggle svg { width: 18px; height: 18px; color: white; }
   </style>
 
@@ -127,24 +121,19 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy view — UV iframe fills screen -->
+<!-- Proxy view -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
   <div class="proxy-bar">
-    <!-- Back -->
     <button class="proxy-back" id="proxy-back-btn" title="Back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <!-- Forward -->
     <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
-    <!-- URL bar (editable) -->
-    <input id="proxy-url-bar" class="proxy-url-input" value="" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
-    <!-- Reload -->
+    <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
     <button class="proxy-back" id="proxy-reload-btn" title="Reload">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
     </button>
-    <!-- Home -->
     <button class="proxy-back" id="proxy-home-btn" title="Home">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
@@ -152,11 +141,10 @@
   <iframe id="uv-frame" style="flex:1;border:none;width:100%;display:block;" allow="fullscreen"></iframe>
 </div>
 
-<!-- Bookmarklet toggle button (shows when in proxy view) -->
+<!-- Bookmarklet toggle -->
 <button id="bm-toggle" title="Bookmarklets">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
 </button>
-<!-- Bookmarklet tray -->
 <div id="bm-tray"></div>
 
 <!-- Inactivity overlay -->
@@ -166,7 +154,6 @@
   <button id="signin-again-btn" style="margin-top:8px;padding:10px 24px;background:#7b6ef6;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;">Sign in again</button>
 </div>
 
-<!-- UV scripts -->
 <script src="/baremux/index.js"></script>
 <script src="/uv/uv.bundle.js"></script>
 <script src="/uv/uv.config.js"></script>
@@ -179,24 +166,39 @@ var connection = null;
 var swReady = false;
 var bookmarklets = [];
 
-// ── Init BareMux ─────────────────────────────────────────
-function initBaremux() {
-  try {
-    connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-    connection.getTransport().then(function(t) {
-      if (t !== "/epoxy/index.mjs") {
-        return connection.setTransport("/epoxy/index.mjs", [{ wisp: WISP_URL }]);
-      }
-    }).then(function() {
-      console.log("[Kairo] Transport ready ✓");
-    }).catch(function(e) { console.warn("[Kairo] Transport:", e); });
-  } catch(e) { console.warn("[Kairo] BareMux:", e); }
+// ── Init BareMux — called at boot AND before every navigation ─
+function getConnection() {
+  if (!connection) {
+    try {
+      connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+    } catch(e) {
+      console.warn("[Kairo] BareMux init failed:", e);
+      return null;
+    }
+  }
+  return connection;
 }
 
-// ── Register SW ──────────────────────────────────────────
+function ensureTransport() {
+  var conn = getConnection();
+  if (!conn) return Promise.resolve();
+  return conn.getTransport().then(function(t) {
+    if (t !== "/epoxy/index.mjs") {
+      return conn.setTransport("/epoxy/index.mjs", [{ wisp: WISP_URL }]);
+    }
+  }).catch(function(e) {
+    console.warn("[Kairo] Transport error:", e);
+  });
+}
+
+// ── SW ───────────────────────────────────────────────────
 function ensureSW() {
   if (swReady) return Promise.resolve();
-  return registerSW().then(function() { swReady = true; });
+  if (typeof registerSW !== "function") return Promise.resolve();
+  return registerSW().then(function() { swReady = true; }).catch(function(e) {
+    showError("Service worker failed: " + e.message);
+    throw e;
+  });
 }
 
 // ── Navigate ─────────────────────────────────────────────
@@ -204,19 +206,13 @@ function go() {
   hideError();
   var val = document.getElementById("url-input").value.trim();
   if (!val) return;
-  val = search(val, "https://www.google.com/search?q=%s");
+  if (typeof search === "function") val = search(val, "https://www.google.com/search?q=%s");
+  else if (!val.startsWith("http")) val = val.includes(".") ? "https://" + val : "https://www.google.com/search?q=" + encodeURIComponent(val);
 
-  ensureSW().then(function() {
-    return connection.getTransport().then(function(t) {
-      if (t !== "/epoxy/index.mjs") {
-        return connection.setTransport("/epoxy/index.mjs", [{ wisp: WISP_URL }]);
-      }
-    });
-  }).then(function() {
-    openProxy(val);
-  }).catch(function(e) {
-    showError(e.message || "Failed to connect");
-  });
+  ensureSW()
+    .then(ensureTransport)
+    .then(function() { openProxy(val); })
+    .catch(function(e) { showError(e.message || "Failed to connect"); });
 }
 
 function goTo(url) {
@@ -249,7 +245,7 @@ function showError(msg) {
 }
 function hideError() { document.getElementById("error-toast").style.display = "none"; }
 
-// ── Proxy bar nav ────────────────────────────────────────
+// ── Proxy bar ────────────────────────────────────────────
 document.getElementById("proxy-back-btn").addEventListener("click", function() {
   try { document.getElementById("uv-frame").contentWindow.history.back(); } catch(e) {}
 });
@@ -260,79 +256,78 @@ document.getElementById("proxy-reload-btn").addEventListener("click", function()
   try { document.getElementById("uv-frame").contentWindow.location.reload(); } catch(e) {}
 });
 document.getElementById("proxy-home-btn").addEventListener("click", closeProxy);
-
 document.getElementById("proxy-url-bar").addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
-    var val = search(this.value.trim(), "https://www.google.com/search?q=%s");
-    document.getElementById("uv-frame").src = __uv$config.prefix + __uv$config.encodeUrl(val);
+    var val = typeof search === "function" ? search(this.value.trim(), "https://www.google.com/search?q=%s") : this.value.trim();
+    ensureTransport().then(function() {
+      document.getElementById("uv-frame").src = __uv$config.prefix + __uv$config.encodeUrl(val);
+    });
   }
 });
-
-// Update URL bar when frame navigates
 document.getElementById("uv-frame").addEventListener("load", function() {
   try {
-    var src = this.contentWindow.location.href;
-    if (src && src !== "about:blank") {
-      var decoded = __uv$config.decodeUrl(src.replace(location.origin + __uv$config.prefix, ""));
-      if (decoded) document.getElementById("proxy-url-bar").value = decoded;
-    }
+    var src = this.src;
+    if (!src || src === "about:blank") return;
+    var encoded = src.replace(location.origin + __uv$config.prefix, "");
+    var decoded = __uv$config.decodeUrl(encoded);
+    if (decoded && decoded !== "about:blank") document.getElementById("proxy-url-bar").value = decoded;
   } catch(e) {}
 });
 
-// ── Devtools shortcut Ctrl+Shift+Alt+I ───────────────────
+// ── Devtools Ctrl+Shift+Alt+I ────────────────────────────
 document.addEventListener("keydown", function(e) {
-  if (e.ctrlKey && e.shiftKey && e.altKey && e.key === "I") {
+  if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === "I" || e.key === "i")) {
     e.preventDefault();
     var frame = document.getElementById("uv-frame");
-    if (frame.style.display !== "none" && document.getElementById("proxy-view").style.display !== "none") {
-      // Open devtools-like inspect on the frame
-      // Since cross-origin devtools isn't directly possible via JS, we open the frame URL in a new tab
-      // so the user can right-click → inspect
-      var src = frame.src;
-      if (src && src !== "about:blank") window.open(src, "_blank");
-      alert("Tip: Right-click the page that opened and select Inspect to open DevTools.");
+    if (frame.src && frame.src !== "about:blank") {
+      window.open(frame.src, "_blank");
+      setTimeout(function() { alert("Page opened in new tab — right-click → Inspect to use DevTools."); }, 300);
     }
   }
-  // Also handle Enter on main search
-  if (e.key === "Enter" && document.activeElement === document.getElementById("url-input")) go();
 });
 
-// ── Bookmarklet tray ─────────────────────────────────────
+// ── Bookmarklets tray ────────────────────────────────────
 document.getElementById("bm-toggle").addEventListener("click", function() {
   document.getElementById("bm-tray").classList.toggle("open");
 });
 
 function renderBookmarkletTray() {
   var tray = document.getElementById("bm-tray");
-  if (!bookmarklets.length) { tray.innerHTML = '<div class="bm-tray-item" style="cursor:default;opacity:0.5;">No bookmarklets</div>'; return; }
-  tray.innerHTML = bookmarklets.map(function(b) {
-    return '<div class="bm-tray-item" data-code="' + encodeURIComponent(b.code) + '">' + b.name + '</div>';
+  if (!bookmarklets.length) {
+    tray.innerHTML = '<div class="bm-tray-item" style="cursor:default;opacity:0.5;">No bookmarklets</div>';
+    return;
+  }
+  tray.innerHTML = bookmarklets.map(function(b, i) {
+    return '<div class="bm-tray-item" data-i="' + i + '">' + b.name + '</div>';
   }).join("");
-  tray.querySelectorAll(".bm-tray-item[data-code]").forEach(function(el) {
+  tray.querySelectorAll(".bm-tray-item[data-i]").forEach(function(el) {
     el.addEventListener("click", function() {
-      var code = decodeURIComponent(this.getAttribute("data-code"));
+      var b = bookmarklets[parseInt(this.getAttribute("data-i"))];
+      if (!b) return;
       var frame = document.getElementById("uv-frame");
-      try {
-        // Inject bookmarklet into the proxied frame
-        frame.contentWindow.eval(code);
-      } catch(e) {
-        // Fallback: try via src
-        frame.src = "javascript:" + encodeURIComponent(code);
-      }
+      try { frame.contentWindow.eval(b.code); }
+      catch(e) { console.warn("Bookmarklet inject failed:", e); }
       document.getElementById("bm-tray").classList.remove("open");
     });
   });
 }
 
-// ── Pins ─────────────────────────────────────────────────
+// ── Pins — use simpleicons.org SVG directly ──────────────
+// Using unpkg CDN to serve official Simple Icons SVGs then CSS filter makes them white
+var ICON_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' stroke='white' stroke-width='1.5' fill='none'/%3E%3C/svg%3E";
+
+function iconUrl(slug) {
+  // Use unpkg to get official Simple Icons SVGs — reliable, no CORS issues
+  return "https://unpkg.com/simple-icons@latest/icons/" + slug + ".svg";
+}
+
 function loadPins() {
   fetch("/api/pins").then(function(r){ return r.json(); }).then(function(data) {
     document.getElementById("pins-grid").innerHTML = (data.pins || []).map(function(p) {
       return '<div class="pin" onclick="goTo(\'' + p.url + '\')" title="' + p.name + '">' +
-        '<img src="https://cdn.simpleicons.org/' + encodeURIComponent(p.icon) + '/ffffff"' +
-        ' alt="' + p.name + '" loading="lazy"' +
-        ' onerror="this.style.opacity=\'0.3\';this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22 stroke=%22white%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E\'"/>' +
-        '</div>';
+        '<img src="' + iconUrl(p.icon) + '" alt="' + p.name + '" loading="lazy"' +
+        ' onerror="this.src=\'' + ICON_FALLBACK + '\'"' +
+        '/></div>';
     }).join("");
   }).catch(function(){});
 }
@@ -360,8 +355,7 @@ function loadServerCookies() {
 function saveServerCookies() {
   try {
     var encoded = document.cookie.split(";").map(function(c){ return c.trim(); }).filter(Boolean).map(function(c) {
-      var i = c.indexOf("=");
-      return i === -1 ? null : encodeURIComponent(c.slice(0,i).trim()) + "=:=" + encodeURIComponent(c.slice(i+1).trim());
+      var i = c.indexOf("="); return i === -1 ? null : encodeURIComponent(c.slice(0,i).trim()) + "=:=" + encodeURIComponent(c.slice(i+1).trim());
     }).filter(Boolean).join("||");
     if (!encoded) return;
     fetch("/api/cookies", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ cookies: encoded }), keepalive: true });
@@ -398,18 +392,16 @@ document.getElementById("go-btn").addEventListener("click", go);
 document.getElementById("logout-btn").addEventListener("click", logout);
 document.getElementById("reset-btn").addEventListener("click", clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click", function() { location.href = "/login.html"; });
+document.getElementById("url-input").addEventListener("keydown", function(e) { if (e.key === "Enter") go(); });
 
 // ── Boot ─────────────────────────────────────────────────
 fetch("/api/me").then(function(r){ return r.json(); }).then(function(me) {
   if (!me.loggedIn) { location.href = "/login.html"; return; }
-
-  // Show display name
-  if (me.displayName) {
-    document.getElementById("greeting-name").textContent = "Hi, " + me.displayName + " 👋";
-  }
+  if (me.displayName) document.getElementById("greeting-name").textContent = "Hi, " + me.displayName + " 👋";
   if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
 
-  initBaremux();
+  // Pre-warm transport in background — don't block UI on it
+  ensureTransport().catch(function(){});
 
   Promise.all([loadServerCookies(), loadPins(), loadBookmarklets()]).then(function() {
     resetTimer();
