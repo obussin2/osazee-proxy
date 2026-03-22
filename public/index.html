@@ -92,6 +92,7 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Admin
       </a>
+
       <button class="nav-btn" id="reset-btn">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
         Reset
@@ -119,6 +120,18 @@
           </svg>
         </button>
       </div>
+      <!-- Tab cloak button — prominent, on home page -->
+      <button onclick="tabCloak()" style="
+        display:inline-flex;align-items:center;gap:7px;
+        background:none;border:1px solid #1c2028;border-radius:8px;
+        color:#5a6370;font-size:0.78rem;font-family:'DM Sans',sans-serif;
+        padding:6px 14px;cursor:pointer;transition:all 0.15s;margin-top:-8px;
+      " onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0'"
+         onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        Cloak Tab
+      </button>
+
       <div class="error-toast" id="error-toast" style="display:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -160,11 +173,6 @@
     <!-- Toggle bookmark bar -->
     <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
-    </button>
-
-    <!-- Tab cloak -->
-    <button class="proxy-back" id="cloak-btn" title="Tab cloak (about:blank)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
     </button>
 
     <!-- Home -->
@@ -332,7 +340,7 @@ document.getElementById("proxy-reload-btn").addEventListener("click",function(){
   try{currentFrame.frame.contentWindow.location.reload();}catch(e){currentFrame.go(url);}
 });
 document.getElementById("proxy-home-btn").addEventListener("click",closeProxy);
-document.getElementById("cloak-btn").addEventListener("click",tabCloak);
+
 
 // ── Bookmark bar toggle ───────────────────────────────────
 document.getElementById("bm-bar-toggle-btn").addEventListener("click",function(){
