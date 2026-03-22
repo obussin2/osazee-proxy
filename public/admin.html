@@ -168,7 +168,7 @@
   async function loadBookmarklets() {
     const items = await fetch("/api/bookmarklets").then(r => r.json());
     document.getElementById("bm-tbody").innerHTML = items.length
-      ? items.map(b=>`<tr><td>${b.name}</td><td style="color:var(--muted)">${b.description||"—"}</td><td style="color:var(--muted)">${new Date(b.createdAt).toLocaleDateString()}</td><td><button class="del-btn" onclick="deleteBookmarklet('${b._id}')">Delete</button></td></tr>`).join("")
+      ? items.map(b=>`<tr><td>${b.name}</td><td style="color:var(--muted)">${b.description||"—"}</td><td style="color:var(--muted)">${new Date(b.createdAt).toLocaleDateString()}</td><td style="display:flex;gap:6px;"><button class="del-btn" onclick="copyBookmarklet('${b._id}','${encodeURIComponent(b.code)}')">Copy</button><button class="del-btn" onclick="deleteBookmarklet('${b._id}')">Delete</button></td></tr>`).join("")
       : `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:24px;">No bookmarklets yet</td></tr>`;
   }
 
@@ -182,6 +182,23 @@
     msg.style.display="block";
     if (data.success) { msg.className="msg ok"; msg.textContent="✓ Saved"; document.getElementById("bm-name").value=""; document.getElementById("bm-desc").value=""; document.getElementById("bm-code").value=""; loadBookmarklets(); }
     else { msg.className="msg err"; msg.textContent="✗ "+data.error; }
+  }
+
+  async function copyBookmarklet(id, encodedCode) {
+    const code = decodeURIComponent(encodedCode);
+    try {
+      await navigator.clipboard.writeText("javascript:" + encodeURIComponent(code));
+      alert("Bookmarklet URL copied to clipboard!");
+    } catch(e) {
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = "javascript:" + encodeURIComponent(code);
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Bookmarklet URL copied!");
+    }
   }
 
   async function deleteBookmarklet(id) {
