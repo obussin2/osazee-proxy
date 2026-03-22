@@ -6,10 +6,8 @@
   <title>Kairo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
-
   <script src="/scram/scramjet.all.js"></script>
   <script src="/baremux/index.js"></script>
-
   <style>
     .pin img {
       width: 18px; height: 18px;
@@ -28,29 +26,61 @@
     }
     .proxy-url-input:focus { border-color: #7b6ef6; color: #e8ecf0; }
 
+    /* ── Bookmark bar ── */
+    #bookmark-bar {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 0 10px;
+      height: 32px;
+      background: #0b0d10;
+      border-bottom: 1px solid #1c2028;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    #bookmark-bar::-webkit-scrollbar { display: none; }
+    #bookmark-bar.has-items { display: flex; }
+
+    .bm-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: #8a94a0;
+      font-size: 0.76rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+    .bm-btn:hover {
+      background: rgba(123,110,246,0.12);
+      color: #e8ecf0;
+    }
+    .bm-btn svg {
+      width: 11px; height: 11px;
+      opacity: 0.5; flex-shrink: 0;
+    }
+    .bm-btn:hover svg { opacity: 1; }
+
     /* ── Frame loading overlay ── */
     #frame-loader {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: #07080a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; z-index: 10;
       transition: opacity 0.3s;
     }
-    #frame-loader.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #frame-loader.hidden { opacity: 0; pointer-events: none; }
     .frame-loader-bar {
-      width: 180px;
-      height: 2px;
-      background: #1c2028;
-      border-radius: 2px;
-      overflow: hidden;
+      width: 180px; height: 2px;
+      background: #1c2028; border-radius: 2px; overflow: hidden;
     }
     .frame-loader-fill {
       height: 100%;
@@ -59,78 +89,34 @@
       animation: framebarfill 1.2s ease-in-out infinite;
     }
     @keyframes framebarfill {
-      0% { width: 0%; margin-left: 0%; }
-      50% { width: 60%; margin-left: 20%; }
-      100% { width: 0%; margin-left: 100%; }
+      0% { width:0%;margin-left:0% }
+      50% { width:60%;margin-left:20% }
+      100% { width:0%;margin-left:100% }
     }
-    .frame-loader-text {
-      font-size: 0.78rem;
-      color: #5a6370;
-      font-family: 'DM Sans', sans-serif;
-      letter-spacing: 0.06em;
-    }
-    .frame-loader-url {
-      font-size: 0.72rem;
-      color: #3a4050;
-      font-family: 'DM Sans', sans-serif;
-      max-width: 280px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .frame-loader-text { font-size:0.78rem;color:#5a6370;font-family:'DM Sans',sans-serif;letter-spacing:0.06em; }
+    .frame-loader-url { font-size:0.72rem;color:#3a4050;font-family:'DM Sans',sans-serif;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 
     /* ── Top progress bar ── */
     #top-progress {
-      position: absolute;
-      top: 0; left: 0;
+      position: absolute; top:0; left:0;
       height: 2px;
       background: linear-gradient(90deg, #7b6ef6, #9d92fa);
-      width: 0%;
-      transition: width 0.3s ease;
-      z-index: 20;
-      border-radius: 0 2px 2px 0;
+      width: 0%; transition: width 0.3s ease;
+      z-index: 20; border-radius: 0 2px 2px 0;
     }
-
-    #bm-tray {
-      position: fixed; bottom: 60px; right: 16px; z-index: 600;
-      display: none; flex-direction: column; gap: 6px;
-      max-height: 300px; overflow-y: auto;
-    }
-    #bm-tray.open { display: flex; }
-    .bm-tray-item {
-      background: rgba(14,16,20,0.96); border: 1px solid #252b35;
-      border-radius: 10px; padding: 8px 14px; font-size: 0.82rem;
-      color: #8a94a0; cursor: pointer; white-space: nowrap;
-      backdrop-filter: blur(12px);
-      transition: border-color 0.15s, color 0.15s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .bm-tray-item:hover { border-color: #7b6ef6; color: #e8ecf0; }
-    #bm-toggle {
-      position: fixed; bottom: 14px; right: 16px; z-index: 601;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: #7b6ef6; border: none; cursor: pointer;
-      display: none; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(123,110,246,0.4);
-      transition: background 0.15s;
-    }
-    #bm-toggle.visible { display: flex; }
-    #bm-toggle:hover { background: #9d92fa; }
-    #bm-toggle svg { width: 18px; height: 18px; color: white; }
   </style>
 
   <script>
     var _uiShown = false;
     function showUI() {
       if (_uiShown) return; _uiShown = true;
-      var l = document.getElementById("loader");
-      var h = document.getElementById("home");
+      var l = document.getElementById("loader"), h = document.getElementById("home");
       if (l) l.style.display = "none";
       if (h) h.style.display = "block";
     }
     setTimeout(showUI, 5000);
-    window.addEventListener("error", function(e) { console.error("[Kairo]", e.message); showUI(); });
-    window.addEventListener("unhandledrejection", function(e) { console.error("[Kairo]", e.reason); showUI(); });
+    window.addEventListener("error", function(e){ console.error("[Kairo]",e.message); showUI(); });
+    window.addEventListener("unhandledrejection", function(e){ console.error("[Kairo]",e.reason); showUI(); });
   </script>
 </head>
 <body>
@@ -183,18 +169,18 @@
         <span id="error-msg">Something went wrong. Please try again.</span>
       </div>
     </section>
-
     <section>
       <div class="section-label">Quick Access</div>
       <div class="pins-grid" id="pins-grid"></div>
     </section>
   </main>
-
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
 <!-- Proxy view -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
+
+  <!-- Nav bar -->
   <div class="proxy-bar" style="position:relative;">
     <div id="top-progress"></div>
     <button class="proxy-back" id="proxy-back-btn" title="Back">
@@ -211,8 +197,12 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
   </div>
+
+  <!-- Bookmark bar — sits between nav and frame -->
+  <div id="bookmark-bar"></div>
+
+  <!-- Frame -->
   <div id="frame-container" style="flex:1;overflow:hidden;position:relative;">
-    <!-- Loading overlay shown while page loads -->
     <div id="frame-loader">
       <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
       <div class="frame-loader-text">Loading…</div>
@@ -221,14 +211,6 @@
     <iframe id="sj-frame" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;" allow="fullscreen"></iframe>
   </div>
 </div>
-
-<!-- Bookmarklet toggle -->
-<button id="bm-toggle" title="Bookmarklets">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
-  </svg>
-</button>
-<div id="bm-tray"></div>
 
 <!-- Inactivity overlay -->
 <div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.96);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
@@ -241,7 +223,6 @@
 <script src="/search.js"></script>
 
 <script>
-// ── Geo: force US/Texas on all URLs ──────────────────────
 var GEO_PARAMS = "hl=en&gl=US";
 var SEARCH_ENGINE = "https://www.google.com/search?q=%s&" + GEO_PARAMS;
 var WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
@@ -259,14 +240,12 @@ function startProgress(url) {
   var loaderUrl = document.getElementById("frame-loader-url");
   if (loaderUrl) loaderUrl.textContent = url || "";
   if (loader) loader.classList.remove("hidden");
-  if (!bar) return;
-  bar.style.width = "0%";
   clearInterval(progressTimer);
   var pct = 0;
+  if (bar) { bar.style.width = "0%"; }
   progressTimer = setInterval(function() {
-    // Ease toward 85% — jumps to 100% on load
     pct = pct + (85 - pct) * 0.08;
-    bar.style.width = pct + "%";
+    if (bar) bar.style.width = pct + "%";
   }, 150);
 }
 
@@ -276,20 +255,15 @@ function finishProgress() {
   clearInterval(progressTimer);
   if (bar) {
     bar.style.width = "100%";
-    setTimeout(function() { bar.style.width = "0%"; }, 400);
+    setTimeout(function() { if (bar) bar.style.width = "0%"; }, 400);
   }
-  if (loader) {
-    setTimeout(function() { loader.classList.add("hidden"); }, 300);
-  }
+  if (loader) setTimeout(function() { loader.classList.add("hidden"); }, 300);
 }
 
-// ── Scramjet init ─────────────────────────────────────────
+// ── Scramjet ──────────────────────────────────────────────
 function initScramjet() {
   try {
-    if (typeof $scramjetLoadController !== "function") {
-      console.warn("[Kairo] $scramjetLoadController not found");
-      return;
-    }
+    if (typeof $scramjetLoadController !== "function") return;
     var ctrl = $scramjetLoadController();
     scramjet = new ctrl.ScramjetController({
       files: {
@@ -299,15 +273,15 @@ function initScramjet() {
       },
     });
     scramjet.init();
-    console.log("[Kairo] Scramjet ready ✓");
-  } catch(e) { console.error("[Kairo] Scramjet init:", e); }
+    console.log("[Kairo] Scramjet ✓");
+  } catch(e) { console.error("[Kairo] Scramjet:", e); }
 }
 
 // ── BareMux ───────────────────────────────────────────────
 function getConn() {
   if (!connection) {
     try { connection = new BareMux.BareMuxConnection("/baremux/worker.js"); }
-    catch(e) { console.warn("[Kairo] BareMux:", e); return null; }
+    catch(e) { return null; }
   }
   return connection;
 }
@@ -316,33 +290,25 @@ function ensureTransport() {
   var conn = getConn();
   if (!conn) return Promise.resolve();
   return conn.getTransport().then(function(t) {
-    if (t !== "/libcurl/index.mjs") {
+    if (t !== "/libcurl/index.mjs")
       return conn.setTransport("/libcurl/index.mjs", [{ websocket: WISP_URL }]);
-    }
-  }).catch(function(e) { console.warn("[Kairo] Transport:", e); });
+  }).catch(function(){});
 }
 
 // ── SW ────────────────────────────────────────────────────
 function ensureSW() {
   if (swReady) return Promise.resolve();
   if (typeof registerSW !== "function") return Promise.resolve();
-  return registerSW().then(function() {
-    swReady = true;
-    console.log("[Kairo] SW ready ✓");
-  }).catch(function(e) {
-    showError("SW failed: " + e.message);
-    throw e;
-  });
+  return registerSW().then(function() { swReady = true; })
+    .catch(function(e) { showError("SW: " + e.message); throw e; });
 }
 
-// ── Add geo params to URL ─────────────────────────────────
+// ── Geo ───────────────────────────────────────────────────
 function addGeo(url) {
   try {
     var u = new URL(url);
-    // Only add to google/youtube
     if (u.hostname.includes("google.com") || u.hostname.includes("youtube.com")) {
-      u.searchParams.set("hl", "en");
-      u.searchParams.set("gl", "US");
+      u.searchParams.set("hl", "en"); u.searchParams.set("gl", "US");
     }
     return u.toString();
   } catch(e) { return url; }
@@ -357,13 +323,9 @@ function go() {
   else if (!val.startsWith("http")) val = val.includes(".") ? "https://" + val : "https://www.google.com/search?q=" + encodeURIComponent(val);
   if (val.startsWith("http://")) val = val.replace("http://", "https://");
   val = addGeo(val);
-
   if (!scramjet) { showError("Proxy not ready — reload the page"); return; }
-
-  ensureSW()
-    .then(ensureTransport)
-    .then(function() { openProxy(val); })
-    .catch(function(e) { showError(e.message || "Connection failed"); });
+  ensureSW().then(ensureTransport).then(function() { openProxy(val); })
+    .catch(function(e) { showError(e.message || "Failed"); });
 }
 
 function goTo(url) {
@@ -372,59 +334,29 @@ function goTo(url) {
 }
 
 function openProxy(url) {
-  if (currentFrame) {
-    try { currentFrame.frame.remove(); } catch(e) {}
-    currentFrame = null;
-  }
-
+  if (currentFrame) { try { currentFrame.frame.remove(); } catch(e){} currentFrame = null; }
   startProgress(url);
-
   try {
     var frame = scramjet.createFrame();
     frame.frame.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
     var container = document.getElementById("frame-container");
-    // Remove old frame elements but keep loader
-    var oldFrame = container.querySelector("iframe");
-    if (oldFrame) oldFrame.remove();
+    var old = container.querySelector("iframe");
+    if (old) old.remove();
     container.appendChild(frame.frame);
     currentFrame = frame;
-
     document.getElementById("proxy-url-bar").value = url;
     document.getElementById("proxy-view").style.display = "flex";
     document.getElementById("home").style.display = "none";
-    document.getElementById("bm-toggle").classList.add("visible");
-    document.getElementById("bm-tray").classList.remove("open");
-
-    // Finish progress when frame loads
-    frame.frame.addEventListener("load", function() {
-      finishProgress();
-      // Try to update URL bar
-      try {
-        var src = frame.frame.src;
-        if (src && src !== "about:blank") {
-          document.getElementById("proxy-url-bar").value = url;
-        }
-      } catch(e) {}
-    });
-
+    frame.frame.addEventListener("load", function() { finishProgress(); });
     frame.go(url);
     saveServerCookies();
-  } catch(e) {
-    finishProgress();
-    showError("Failed to open: " + e.message);
-  }
+  } catch(e) { finishProgress(); showError("Failed: " + e.message); }
 }
 
 function closeProxy() {
-  if (currentFrame) {
-    try { currentFrame.frame.remove(); } catch(e) {}
-    currentFrame = null;
-  }
+  if (currentFrame) { try { currentFrame.frame.remove(); } catch(e){} currentFrame = null; }
   document.getElementById("proxy-view").style.display = "none";
   document.getElementById("home").style.display = "block";
-  document.getElementById("bm-toggle").classList.remove("visible");
-  document.getElementById("bm-tray").classList.remove("open");
-  // Reset loader for next time
   var loader = document.getElementById("frame-loader");
   if (loader) loader.classList.remove("hidden");
 }
@@ -437,173 +369,172 @@ function hideError() { document.getElementById("error-toast").style.display = "n
 
 // ── Proxy bar ─────────────────────────────────────────────
 document.getElementById("proxy-back-btn").addEventListener("click", function() {
-  try { currentFrame && currentFrame.frame.contentWindow.history.back(); } catch(e) {}
+  try { currentFrame && currentFrame.frame.contentWindow.history.back(); } catch(e){}
 });
 document.getElementById("proxy-fwd-btn").addEventListener("click", function() {
-  try { currentFrame && currentFrame.frame.contentWindow.history.forward(); } catch(e) {}
+  try { currentFrame && currentFrame.frame.contentWindow.history.forward(); } catch(e){}
 });
 document.getElementById("proxy-reload-btn").addEventListener("click", function() {
   if (!currentFrame) return;
   var url = document.getElementById("proxy-url-bar").value;
   startProgress(url);
-  try { currentFrame.frame.contentWindow.location.reload(); } catch(e) {
-    currentFrame.go(url);
-  }
+  try { currentFrame.frame.contentWindow.location.reload(); }
+  catch(e) { currentFrame.go(url); }
 });
 document.getElementById("proxy-home-btn").addEventListener("click", closeProxy);
 document.getElementById("proxy-url-bar").addEventListener("keydown", function(e) {
   if (e.key !== "Enter") return;
-  var val = typeof search === "function"
-    ? search(this.value.trim(), SEARCH_ENGINE)
-    : this.value.trim();
+  var val = typeof search === "function" ? search(this.value.trim(), SEARCH_ENGINE) : this.value.trim();
   if (val.startsWith("http://")) val = val.replace("http://", "https://");
   val = addGeo(val);
   startProgress(val);
   ensureTransport().then(function() {
-    if (currentFrame) {
-      currentFrame.go(val);
-      document.getElementById("proxy-url-bar").value = val;
-    }
+    if (currentFrame) { currentFrame.go(val); document.getElementById("proxy-url-bar").value = val; }
   });
 });
 
-// ── Devtools Ctrl+Shift+Alt+I ─────────────────────────────
+// ── Devtools ──────────────────────────────────────────────
 document.addEventListener("keydown", function(e) {
   if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === "I" || e.key === "i")) {
     e.preventDefault();
-    if (currentFrame && currentFrame.frame) {
+    if (currentFrame && currentFrame.frame)
       window.open(currentFrame.frame.src, "_blank");
-      setTimeout(function() { alert("Right-click → Inspect in the new tab."); }, 400);
-    }
   }
 });
 
-// ── Bookmarklet tray ──────────────────────────────────────
-document.getElementById("bm-toggle").addEventListener("click", function() {
-  document.getElementById("bm-tray").classList.toggle("open");
-});
+// ── Bookmark bar ──────────────────────────────────────────
+// Bookmarklets are shown as a persistent bar at the top of the proxy view.
+// Clicking one sends the code to scramjet via postMessage to the SW,
+// which injects it into the proxied page's context.
+function runBookmarklet(code) {
+  if (!currentFrame) return;
+  try {
+    // Method 1: postMessage to the frame's SW-controlled window
+    currentFrame.frame.contentWindow.postMessage({
+      type: "kairo-bookmarklet",
+      code: code
+    }, "*");
+  } catch(e) {}
 
-function renderBookmarkletTray() {
-  var tray = document.getElementById("bm-tray");
+  // Method 2: navigate the frame to a javascript: URL via scramjet's go()
+  // This works because scramjet intercepts navigation inside the frame
+  try {
+    var jsUrl = "javascript:" + encodeURIComponent("(function(){" + code + "})()");
+    currentFrame.go(jsUrl);
+  } catch(e) {}
+}
+
+function renderBookmarkBar() {
+  var bar = document.getElementById("bookmark-bar");
   if (!bookmarklets.length) {
-    tray.innerHTML = '<div class="bm-tray-item" style="cursor:default;opacity:0.5;">No bookmarklets</div>';
+    bar.classList.remove("has-items");
+    bar.innerHTML = "";
     return;
   }
-  tray.innerHTML = bookmarklets.map(function(b, i) {
-    return '<div class="bm-tray-item" data-i="' + i + '">' + b.name + '</div>';
+  bar.classList.add("has-items");
+  bar.innerHTML = bookmarklets.map(function(b, i) {
+    return '<button class="bm-btn" data-i="' + i + '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>' +
+      b.name + '</button>';
   }).join("");
-  tray.querySelectorAll("[data-i]").forEach(function(el) {
+  bar.querySelectorAll(".bm-btn").forEach(function(el) {
     el.addEventListener("click", function() {
       var b = bookmarklets[parseInt(this.getAttribute("data-i"))];
-      if (!b || !currentFrame) return;
-      try { currentFrame.frame.contentWindow.eval(b.code); }
-      catch(e) { console.warn("Bookmarklet:", e); }
-      document.getElementById("bm-tray").classList.remove("open");
+      if (b) runBookmarklet(b.code);
     });
   });
 }
 
 // ── Pins ──────────────────────────────────────────────────
 function loadPins() {
-  fetch("/api/pins").then(function(r) { return r.json(); }).then(function(data) {
-    document.getElementById("pins-grid").innerHTML = (data.pins || []).map(function(p) {
+  fetch("/api/pins").then(function(r){return r.json();}).then(function(data){
+    document.getElementById("pins-grid").innerHTML = (data.pins||[]).map(function(p){
       return '<div class="pin" onclick="goTo(\'' + addGeo(p.url) + '\')" title="' + p.name + '">' +
         '<img src="https://unpkg.com/simple-icons@latest/icons/' + p.icon + '.svg"' +
-        ' alt="' + p.name + '" loading="lazy"' +
-        ' onerror="this.style.opacity=\'0.3\'"/></div>';
+        ' alt="' + p.name + '" loading="lazy" onerror="this.style.opacity=\'0.3\'"/></div>';
     }).join("");
-  }).catch(function() {});
+  }).catch(function(){});
 }
 
 // ── Bookmarklets ──────────────────────────────────────────
 function loadBookmarklets() {
-  fetch("/api/bookmarklets").then(function(r) { return r.json(); }).then(function(items) {
-    bookmarklets = items || [];
-    renderBookmarkletTray();
-  }).catch(function() {});
+  fetch("/api/bookmarklets").then(function(r){return r.json();}).then(function(items){
+    bookmarklets = items||[];
+    renderBookmarkBar();
+  }).catch(function(){});
 }
 
 // ── Cookie sync ───────────────────────────────────────────
 function loadServerCookies() {
-  return fetch("/api/cookies").then(function(r) { return r.json(); }).then(function(data) {
+  return fetch("/api/cookies").then(function(r){return r.json();}).then(function(data){
     if (!data.cookies) return;
-    data.cookies.split("||").forEach(function(entry) {
-      var idx = entry.indexOf("=:=");
-      if (idx === -1) return;
-      document.cookie = decodeURIComponent(entry.slice(0, idx)) + "=" +
-        decodeURIComponent(entry.slice(idx + 3)) + "; path=/; SameSite=Lax";
+    data.cookies.split("||").forEach(function(entry){
+      var idx = entry.indexOf("=:="); if (idx===-1) return;
+      document.cookie = decodeURIComponent(entry.slice(0,idx)) + "=" +
+        decodeURIComponent(entry.slice(idx+3)) + "; path=/; SameSite=Lax";
     });
-  }).catch(function() {});
+  }).catch(function(){});
 }
 
 function saveServerCookies() {
   try {
-    var encoded = document.cookie.split(";").map(function(c) { return c.trim(); })
-      .filter(Boolean).map(function(c) {
-        var i = c.indexOf("=");
-        return i === -1 ? null :
-          encodeURIComponent(c.slice(0, i).trim()) + "=:=" + encodeURIComponent(c.slice(i + 1).trim());
-      }).filter(Boolean).join("||");
+    var encoded = document.cookie.split(";").map(function(c){return c.trim();}).filter(Boolean)
+      .map(function(c){ var i=c.indexOf("="); return i===-1?null:
+        encodeURIComponent(c.slice(0,i).trim())+"=:="+encodeURIComponent(c.slice(i+1).trim()); })
+      .filter(Boolean).join("||");
     if (!encoded) return;
-    fetch("/api/cookies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cookies: encoded }),
-      keepalive: true
-    });
-  } catch(e) {}
+    fetch("/api/cookies",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({cookies:encoded}),keepalive:true});
+  } catch(e){}
 }
 
 function clearSessions() {
-  document.cookie.split(";").forEach(function(c) {
-    document.cookie = c.trim().split("=")[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+  document.cookie.split(";").forEach(function(c){
+    document.cookie=c.trim().split("=")[0]+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
   });
-  fetch("/api/cookies", { method: "DELETE" }).then(function() { alert("Sessions cleared."); });
+  fetch("/api/cookies",{method:"DELETE"}).then(function(){alert("Sessions cleared.");});
 }
 
 function logout() {
-  fetch("/api/logout", { method: "POST" }).then(function() { location.href = "/login.html"; });
+  fetch("/api/logout",{method:"POST"}).then(function(){location.href="/login.html";});
 }
 
 // ── Inactivity ────────────────────────────────────────────
 var inactivityTimer;
 function resetTimer() {
   clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(function() {
-    fetch("/api/logout", { method: "POST" }).then(function() {
-      document.getElementById("timeout-overlay").style.display = "flex";
+  inactivityTimer = setTimeout(function(){
+    fetch("/api/logout",{method:"POST"}).then(function(){
+      document.getElementById("timeout-overlay").style.display="flex";
     });
-  }, 20 * 60 * 1000);
+  }, 20*60*1000);
 }
-["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(function(e) {
-  document.addEventListener(e, resetTimer, { passive: true });
+["mousemove","keydown","click","scroll","touchstart"].forEach(function(e){
+  document.addEventListener(e,resetTimer,{passive:true});
 });
 
 // ── Wire buttons ──────────────────────────────────────────
 document.getElementById("go-btn").addEventListener("click", go);
 document.getElementById("logout-btn").addEventListener("click", logout);
 document.getElementById("reset-btn").addEventListener("click", clearSessions);
-document.getElementById("signin-again-btn").addEventListener("click", function() { location.href = "/login.html"; });
-document.getElementById("url-input").addEventListener("keydown", function(e) { if (e.key === "Enter") go(); });
+document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
+document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
 
 // ── Boot ──────────────────────────────────────────────────
-fetch("/api/me").then(function(r) { return r.json(); }).then(function(me) {
-  if (!me.loggedIn) { location.href = "/login.html"; return; }
-  if (me.displayName) document.getElementById("greeting-name").textContent = "Hi, " + me.displayName + " 👋";
-  if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
-
+fetch("/api/me").then(function(r){return r.json();}).then(function(me){
+  if (!me.loggedIn){location.href="/login.html";return;}
+  if (me.displayName) document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
+  if (me.isAdmin) document.getElementById("admin-link").style.display="inline-flex";
   initScramjet();
-  ensureTransport().catch(function() {});
-
-  Promise.all([loadServerCookies(), loadPins(), loadBookmarklets()])
-    .then(function() {
+  ensureTransport().catch(function(){});
+  Promise.all([loadServerCookies(),loadPins(),loadBookmarklets()])
+    .then(function(){
       resetTimer();
-      setInterval(saveServerCookies, 15000);
-      window.addEventListener("beforeunload", saveServerCookies);
+      setInterval(saveServerCookies,15000);
+      window.addEventListener("beforeunload",saveServerCookies);
       showUI();
-    })
-    .catch(function() { showUI(); });
-}).catch(function() { location.href = "/login.html"; });
+    }).catch(function(){showUI();});
+}).catch(function(){location.href="/login.html";});
 </script>
 </body>
 </html>
