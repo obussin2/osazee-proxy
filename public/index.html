@@ -7,7 +7,6 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237b6ef6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='white'%3EK%3C/text%3E%3C/svg%3E"/>
   <link rel="stylesheet" href="/style.css"/>
 
-  <!-- Scramjet + BareMux loaded first -->
   <script src="/scram/scramjet.all.js"></script>
   <script src="/baremux/index.js"></script>
 
@@ -28,6 +27,69 @@
       transition: border-color 0.15s, color 0.15s;
     }
     .proxy-url-input:focus { border-color: #7b6ef6; color: #e8ecf0; }
+
+    /* ── Frame loading overlay ── */
+    #frame-loader {
+      position: absolute;
+      inset: 0;
+      background: #07080a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 10;
+      transition: opacity 0.3s;
+    }
+    #frame-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .frame-loader-bar {
+      width: 180px;
+      height: 2px;
+      background: #1c2028;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .frame-loader-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7b6ef6, #9d92fa);
+      border-radius: 2px;
+      animation: framebarfill 1.2s ease-in-out infinite;
+    }
+    @keyframes framebarfill {
+      0% { width: 0%; margin-left: 0%; }
+      50% { width: 60%; margin-left: 20%; }
+      100% { width: 0%; margin-left: 100%; }
+    }
+    .frame-loader-text {
+      font-size: 0.78rem;
+      color: #5a6370;
+      font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.06em;
+    }
+    .frame-loader-url {
+      font-size: 0.72rem;
+      color: #3a4050;
+      font-family: 'DM Sans', sans-serif;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Top progress bar ── */
+    #top-progress {
+      position: absolute;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #7b6ef6, #9d92fa);
+      width: 0%;
+      transition: width 0.3s ease;
+      z-index: 20;
+      border-radius: 0 2px 2px 0;
+    }
 
     #bm-tray {
       position: fixed; bottom: 60px; right: 16px; z-index: 600;
@@ -66,7 +128,6 @@
       if (l) l.style.display = "none";
       if (h) h.style.display = "block";
     }
-    // Nuclear fallback — always show UI after 5s
     setTimeout(showUI, 5000);
     window.addEventListener("error", function(e) { console.error("[Kairo]", e.message); showUI(); });
     window.addEventListener("unhandledrejection", function(e) { console.error("[Kairo]", e.reason); showUI(); });
@@ -132,9 +193,10 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
-<!-- Proxy view — scramjet frame fills screen -->
+<!-- Proxy view -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;background:#07080a;">
-  <div class="proxy-bar">
+  <div class="proxy-bar" style="position:relative;">
+    <div id="top-progress"></div>
     <button class="proxy-back" id="proxy-back-btn" title="Back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
@@ -149,10 +211,18 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
   </div>
-  <div id="frame-container" style="flex:1;overflow:hidden;position:relative;"></div>
+  <div id="frame-container" style="flex:1;overflow:hidden;position:relative;">
+    <!-- Loading overlay shown while page loads -->
+    <div id="frame-loader">
+      <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
+      <div class="frame-loader-text">Loading…</div>
+      <div class="frame-loader-url" id="frame-loader-url"></div>
+    </div>
+    <iframe id="sj-frame" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;" allow="fullscreen"></iframe>
+  </div>
 </div>
 
-<!-- Bookmarklet toggle (shows in proxy view) -->
+<!-- Bookmarklet toggle -->
 <button id="bm-toggle" title="Bookmarklets">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
@@ -171,14 +241,49 @@
 <script src="/search.js"></script>
 
 <script>
+// ── Geo: force US/Texas on all URLs ──────────────────────
+var GEO_PARAMS = "hl=en&gl=US";
+var SEARCH_ENGINE = "https://www.google.com/search?q=%s&" + GEO_PARAMS;
 var WISP_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/wisp/";
 var scramjet = null;
 var connection = null;
 var currentFrame = null;
 var swReady = false;
 var bookmarklets = [];
+var progressTimer = null;
 
-// ── Init scramjet ─────────────────────────────────────────
+// ── Progress bar ──────────────────────────────────────────
+function startProgress(url) {
+  var bar = document.getElementById("top-progress");
+  var loader = document.getElementById("frame-loader");
+  var loaderUrl = document.getElementById("frame-loader-url");
+  if (loaderUrl) loaderUrl.textContent = url || "";
+  if (loader) loader.classList.remove("hidden");
+  if (!bar) return;
+  bar.style.width = "0%";
+  clearInterval(progressTimer);
+  var pct = 0;
+  progressTimer = setInterval(function() {
+    // Ease toward 85% — jumps to 100% on load
+    pct = pct + (85 - pct) * 0.08;
+    bar.style.width = pct + "%";
+  }, 150);
+}
+
+function finishProgress() {
+  var bar = document.getElementById("top-progress");
+  var loader = document.getElementById("frame-loader");
+  clearInterval(progressTimer);
+  if (bar) {
+    bar.style.width = "100%";
+    setTimeout(function() { bar.style.width = "0%"; }, 400);
+  }
+  if (loader) {
+    setTimeout(function() { loader.classList.add("hidden"); }, 300);
+  }
+}
+
+// ── Scramjet init ─────────────────────────────────────────
 function initScramjet() {
   try {
     if (typeof $scramjetLoadController !== "function") {
@@ -198,7 +303,7 @@ function initScramjet() {
   } catch(e) { console.error("[Kairo] Scramjet init:", e); }
 }
 
-// ── Init BareMux ──────────────────────────────────────────
+// ── BareMux ───────────────────────────────────────────────
 function getConn() {
   if (!connection) {
     try { connection = new BareMux.BareMuxConnection("/baremux/worker.js"); }
@@ -221,9 +326,26 @@ function ensureTransport() {
 function ensureSW() {
   if (swReady) return Promise.resolve();
   if (typeof registerSW !== "function") return Promise.resolve();
-  return registerSW()
-    .then(function() { swReady = true; })
-    .catch(function(e) { showError("SW failed: " + e.message); throw e; });
+  return registerSW().then(function() {
+    swReady = true;
+    console.log("[Kairo] SW ready ✓");
+  }).catch(function(e) {
+    showError("SW failed: " + e.message);
+    throw e;
+  });
+}
+
+// ── Add geo params to URL ─────────────────────────────────
+function addGeo(url) {
+  try {
+    var u = new URL(url);
+    // Only add to google/youtube
+    if (u.hostname.includes("google.com") || u.hostname.includes("youtube.com")) {
+      u.searchParams.set("hl", "en");
+      u.searchParams.set("gl", "US");
+    }
+    return u.toString();
+  } catch(e) { return url; }
 }
 
 // ── Navigate ──────────────────────────────────────────────
@@ -231,10 +353,12 @@ function go() {
   hideError();
   var val = document.getElementById("url-input").value.trim();
   if (!val) return;
-  if (typeof search === "function") val = search(val, "https://www.google.com/search?q=%s");
+  if (typeof search === "function") val = search(val, SEARCH_ENGINE);
   else if (!val.startsWith("http")) val = val.includes(".") ? "https://" + val : "https://www.google.com/search?q=" + encodeURIComponent(val);
+  if (val.startsWith("http://")) val = val.replace("http://", "https://");
+  val = addGeo(val);
 
-  if (!scramjet) { showError("Proxy not ready — please reload the page"); return; }
+  if (!scramjet) { showError("Proxy not ready — reload the page"); return; }
 
   ensureSW()
     .then(ensureTransport)
@@ -248,26 +372,47 @@ function goTo(url) {
 }
 
 function openProxy(url) {
-  // Remove old frame
   if (currentFrame) {
     try { currentFrame.frame.remove(); } catch(e) {}
     currentFrame = null;
   }
+
+  startProgress(url);
+
   try {
-    var container = document.getElementById("frame-container");
-    container.innerHTML = "";
     var frame = scramjet.createFrame();
     frame.frame.style.cssText = "width:100%;height:100%;border:none;display:block;position:absolute;inset:0;";
+    var container = document.getElementById("frame-container");
+    // Remove old frame elements but keep loader
+    var oldFrame = container.querySelector("iframe");
+    if (oldFrame) oldFrame.remove();
     container.appendChild(frame.frame);
     currentFrame = frame;
+
     document.getElementById("proxy-url-bar").value = url;
     document.getElementById("proxy-view").style.display = "flex";
     document.getElementById("home").style.display = "none";
     document.getElementById("bm-toggle").classList.add("visible");
     document.getElementById("bm-tray").classList.remove("open");
+
+    // Finish progress when frame loads
+    frame.frame.addEventListener("load", function() {
+      finishProgress();
+      // Try to update URL bar
+      try {
+        var src = frame.frame.src;
+        if (src && src !== "about:blank") {
+          document.getElementById("proxy-url-bar").value = url;
+        }
+      } catch(e) {}
+    });
+
     frame.go(url);
     saveServerCookies();
-  } catch(e) { showError("Failed to open: " + e.message); }
+  } catch(e) {
+    finishProgress();
+    showError("Failed to open: " + e.message);
+  }
 }
 
 function closeProxy() {
@@ -279,6 +424,9 @@ function closeProxy() {
   document.getElementById("home").style.display = "block";
   document.getElementById("bm-toggle").classList.remove("visible");
   document.getElementById("bm-tray").classList.remove("open");
+  // Reset loader for next time
+  var loader = document.getElementById("frame-loader");
+  if (loader) loader.classList.remove("hidden");
 }
 
 function showError(msg) {
@@ -295,17 +443,27 @@ document.getElementById("proxy-fwd-btn").addEventListener("click", function() {
   try { currentFrame && currentFrame.frame.contentWindow.history.forward(); } catch(e) {}
 });
 document.getElementById("proxy-reload-btn").addEventListener("click", function() {
-  try { currentFrame && currentFrame.frame.contentWindow.location.reload(); } catch(e) {}
+  if (!currentFrame) return;
+  var url = document.getElementById("proxy-url-bar").value;
+  startProgress(url);
+  try { currentFrame.frame.contentWindow.location.reload(); } catch(e) {
+    currentFrame.go(url);
+  }
 });
 document.getElementById("proxy-home-btn").addEventListener("click", closeProxy);
 document.getElementById("proxy-url-bar").addEventListener("keydown", function(e) {
   if (e.key !== "Enter") return;
   var val = typeof search === "function"
-    ? search(this.value.trim(), "https://www.google.com/search?q=%s")
+    ? search(this.value.trim(), SEARCH_ENGINE)
     : this.value.trim();
+  if (val.startsWith("http://")) val = val.replace("http://", "https://");
+  val = addGeo(val);
+  startProgress(val);
   ensureTransport().then(function() {
-    if (currentFrame) currentFrame.go(val);
-    document.getElementById("proxy-url-bar").value = val;
+    if (currentFrame) {
+      currentFrame.go(val);
+      document.getElementById("proxy-url-bar").value = val;
+    }
   });
 });
 
@@ -315,7 +473,7 @@ document.addEventListener("keydown", function(e) {
     e.preventDefault();
     if (currentFrame && currentFrame.frame) {
       window.open(currentFrame.frame.src, "_blank");
-      setTimeout(function() { alert("Right-click the new tab → Inspect to open DevTools."); }, 400);
+      setTimeout(function() { alert("Right-click → Inspect in the new tab."); }, 400);
     }
   }
 });
@@ -349,11 +507,10 @@ function renderBookmarkletTray() {
 function loadPins() {
   fetch("/api/pins").then(function(r) { return r.json(); }).then(function(data) {
     document.getElementById("pins-grid").innerHTML = (data.pins || []).map(function(p) {
-      return '<div class="pin" onclick="goTo(\'' + p.url + '\')" title="' + p.name + '">' +
+      return '<div class="pin" onclick="goTo(\'' + addGeo(p.url) + '\')" title="' + p.name + '">' +
         '<img src="https://unpkg.com/simple-icons@latest/icons/' + p.icon + '.svg"' +
         ' alt="' + p.name + '" loading="lazy"' +
-        ' onerror="this.style.opacity=\'0.3\'"' +
-        '/></div>';
+        ' onerror="this.style.opacity=\'0.3\'"/></div>';
     }).join("");
   }).catch(function() {});
 }
@@ -436,8 +593,6 @@ fetch("/api/me").then(function(r) { return r.json(); }).then(function(me) {
   if (me.isAdmin) document.getElementById("admin-link").style.display = "inline-flex";
 
   initScramjet();
-
-  // Pre-warm transport in background
   ensureTransport().catch(function() {});
 
   Promise.all([loadServerCookies(), loadPins(), loadBookmarklets()])
