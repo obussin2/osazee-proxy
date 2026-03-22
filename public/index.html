@@ -129,7 +129,7 @@
       " onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0'"
          onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-        Cloak Tab
+        Cloak Tab (opens Google decoy)
       </button>
 
       <div class="error-toast" id="error-toast" style="display:none;">
@@ -216,17 +216,31 @@ var swReady = false, bookmarklets = [], progressTimer = null;
 var bmBarVisible = false;
 
 // ── Tab cloak ─────────────────────────────────────────────
-// Opens a real about:blank window and renders Kairo inside it via srcdoc
-// Teacher/admin sees about:blank in the address bar
+// Two modes:
+// 1. Panic key (Escape x2) — instantly replaces current tab title + favicon with Google
+// 2. Cloak Tab button — opens a fake about:blank decoy tab, keeps current tab working
+var _panicCount = 0, _panicTimer = null;
+
 function tabCloak() {
-  var w = window.open("about:blank", "_blank");
-  if (!w) { alert("Allow popups for this site to use tab cloaking."); return; }
-  var html = document.documentElement.outerHTML;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  // Close this tab so only the cloaked one remains
-  window.close();
+  // Open a decoy about:blank tab — this is what someone glancing sees
+  var decoy = window.open("about:blank", "_blank");
+  if (!decoy) { alert("Allow popups for this site to use tab cloaking."); return; }
+  // Write a convincing Google-like page into the decoy
+  decoy.document.open();
+  decoy.document.write('<!DOCTYPE html><html><head><title>Google</title>' +
+    '<link rel="icon" href="https://www.google.com/favicon.ico"/>' +
+    '<style>body{margin:0;background:#fff;font-family:arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding-top:100px;}' +
+    'input{width:450px;padding:12px 16px;border:1px solid #dfe1e5;border-radius:24px;font-size:16px;outline:none;}' +
+    'input:focus{border-color:#4285f4;box-shadow:0 1px 6px rgba(32,33,36,.28);}' +
+    '.logo{margin-bottom:28px;}</style></head>' +
+    '<body><img class="logo" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" width="272" height="92"/>' +
+    '<input type="text" placeholder="Search Google or type a URL"/></body></html>');
+  decoy.document.close();
+
+  // Also disguise THIS tab in case someone looks at the tab strip
+  document.title = "Google";
+  var link = document.querySelector("link[rel~='icon']");
+  if (link) link.href = "https://www.google.com/favicon.ico";
 }
 
 // ── Progress ──────────────────────────────────────────────
