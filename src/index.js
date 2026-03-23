@@ -9,6 +9,8 @@ import fastifyStatic from "@fastify/static";
 import { scramjetPath } from "@mercuryworkshop/scramjet/path";
 import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
+import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
+import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -47,7 +49,7 @@ if (!(await User.findOne({ username: "admin" }))) {
 logging.set_level(logging.NONE);
 Object.assign(wisp.options, {
   allow_udp_streams: false,
-  dns_servers: ["1.1.1.3", "1.0.0.3"],
+  dns_servers: ["8.8.8.8", "8.8.4.4"],
 });
 
 // ── Session middleware ───────────────────────────────────
@@ -117,6 +119,20 @@ await fastify.register(fastifyStatic, {
 await fastify.register(fastifyStatic, {
   root: baremuxPath,
   prefix: "/baremux/",
+  decorateReply: false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  immutable: true,
+});
+await fastify.register(fastifyStatic, {
+  root: uvPath,
+  prefix: "/uv/",
+  decorateReply: false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  immutable: true,
+});
+await fastify.register(fastifyStatic, {
+  root: epoxyPath,
+  prefix: "/epoxy/",
   decorateReply: false,
   maxAge: 7 * 24 * 60 * 60 * 1000,
   immutable: true,
