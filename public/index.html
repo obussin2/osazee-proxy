@@ -137,36 +137,6 @@
       </div>
     </section>
     <section>
-      <!-- browser.lol shortcut for Blooket -->
-      <div style="margin-bottom:12px;">
-        <div class="section-label">Blooket</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button id="blooket-biab-btn" style="
-            display:inline-flex;align-items:center;gap:8px;
-            background:#0e1014;border:1px solid #1c2028;border-radius:10px;
-            color:#8a94a0;font-size:0.82rem;font-family:'DM Sans',sans-serif;
-            padding:9px 16px;cursor:pointer;transition:all 0.15s;
-          " onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0';this.style.boxShadow='0 0 0 3px rgba(123,110,246,0.15)'"
-             onmouseout="this.style.borderColor='#1c2028';this.style.color='#8a94a0';this.style.boxShadow='none'">
-            <img src="https://unpkg.com/simple-icons@latest/icons/googlechrome.svg"
-              style="width:14px;height:14px;filter:brightness(0) invert(1);opacity:0.7;" alt=""/>
-            Open Blooket via Virtual Browser
-          </button>
-          <button id="blooket-biab-fullscreen-btn" style="
-            display:inline-flex;align-items:center;gap:6px;
-            background:none;border:1px solid #1c2028;border-radius:10px;
-            color:#5a6370;font-size:0.78rem;font-family:'DM Sans',sans-serif;
-            padding:9px 12px;cursor:pointer;transition:all 0.15s;
-          " title="Open fullscreen"
-             onmouseover="this.style.borderColor='#7b6ef6';this.style.color='#e8ecf0'"
-             onmouseout="this.style.borderColor='#1c2028';this.style.color='#5a6370'">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-            Fullscreen
-          </button>
-        </div>
-        <div style="font-size:0.72rem;color:#3a4050;margin-top:6px;">Opens browser.lol — a virtual browser that bypasses Blooket's connection block</div>
-      </div>
-
       <div class="section-label">Quick Access</div>
       <div class="pins-grid" id="pins-grid"></div>
     </section>
@@ -546,23 +516,6 @@ document.getElementById("reset-btn").addEventListener("click",clearSessions);
 document.getElementById("signin-again-btn").addEventListener("click",function(){location.href="/login.html";});
 document.getElementById("url-input").addEventListener("keydown",function(e){if(e.key==="Enter")go();});
 
-// ── Browser.lol (Blooket virtual browser) ────────────────
-document.getElementById("blooket-biab-btn").addEventListener("click", function() {
-  // Load browser.lol inside the Kairo proxy frame
-  goTo("https://browser.lol");
-});
-document.getElementById("blooket-biab-fullscreen-btn").addEventListener("click", function() {
-  // Load browser.lol inside proxy then fullscreen
-  goTo("https://browser.lol");
-  // Fullscreen after frame loads
-  setTimeout(function() {
-    var container = document.getElementById("proxy-view");
-    if (container && container.requestFullscreen) {
-      container.requestFullscreen().catch(function(){});
-    }
-  }, 2000);
-});
-
 // Fullscreen proxy button
 document.getElementById("proxy-fullscreen-btn").addEventListener("click", function() {
   var container = document.getElementById("proxy-view");
@@ -570,7 +523,6 @@ document.getElementById("proxy-fullscreen-btn").addEventListener("click", functi
     document.exitFullscreen().catch(function(){});
   } else if (container) {
     container.requestFullscreen().catch(function(){
-      // Fallback: try frame itself
       var frame = document.getElementById("sj-frame");
       if (frame && frame.requestFullscreen) frame.requestFullscreen().catch(function(){});
     });
