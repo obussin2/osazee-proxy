@@ -15,6 +15,13 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectMongo from "connect-mongo";
+import { BareMuxConnection } from '/baremux/index.mjs';
+
+const connection = new BareMuxConnection('/baremux/worker.js');
+const wispUrl = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/";
+
+// This ensures BareMux is actually using your Wisp server for all sub-requests
+await connection.setTransport('/epoxy/index.mjs', [{ wisp: wispUrl }]);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicPath = join(__dirname, "../public");
