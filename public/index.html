@@ -537,5 +537,19 @@ Promise.all([
   showUI();
 }).catch(function(){location.href="/login.html";});
 </script>
+
+<script type="module">
+  import { BareMuxConnection } from '/baremux/index.mjs';
+
+  // 1. Establish the BareMux connection to the worker
+  const connection = new BareMuxConnection('/baremux/worker.js');
+
+  // 2. Dynamically build the Wisp URL so it never uses wss:// on http://
+  const wispUrl = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/";
+
+  // 3. Mount Epoxy and feed it the Wisp URL (THIS FIXES LIBCURL)
+  connection.setTransport('/epoxy/index.mjs', [{ wisp: wispUrl }]);
+</script>
+  
 </body>
 </html>
