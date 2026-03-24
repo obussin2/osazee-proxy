@@ -233,13 +233,10 @@ function initScramjet(){
   try{
     if(typeof $scramjetLoadController!=="function")return;
     var ctrl=$scramjetLoadController();
-    // THE FIX: Added prefix, worker, and client paths so it doesn't 404
     scramjet=new ctrl.ScramjetController({
       prefix: "/scram/",
       files:{
-        wasm:"/scram/scramjet.wasm", 
-        worker:"/scram/scramjet.worker.js",
-        client:"/scram/scramjet.client.js",
+        wasm:"/scram/scramjet.wasm.wasm", 
         all:"/scram/scramjet.all.js",
         sync:"/scram/scramjet.sync.js"
       }
@@ -527,4 +524,16 @@ Promise.all([
   loadServerCookies(),loadPins(),loadBookmarklets()
 ]).then(function(results){
   var me=results[0];
-  if(!me.loggedIn){
+  if(!me.loggedIn){location.href="/login.html";return;}
+  if(me.displayName)document.getElementById("greeting-name").textContent="Hi, "+me.displayName+" 👋";
+  if(me.isAdmin)document.getElementById("admin-link").style.display="inline-flex";
+  initScramjet();
+  ensureSW().catch(function(){});
+  ensureTransport().catch(function(){});
+  resetTimer();setInterval(saveServerCookies,15000);
+  window.addEventListener("beforeunload",saveServerCookies);
+  showUI();
+}).catch(function(){location.href="/login.html";});
+</script>
+</body>
+</html>
