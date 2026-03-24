@@ -1,4 +1,5 @@
-// This MUST be .worker.js, NOT .all.js
+// sw.js
+importScripts("/baremux/bare.cjs");
 importScripts("/scram/scramjet.worker.js");
 
 const { ScramjetServiceWorker } = $scramjetLoadWorker();
