@@ -81,8 +81,7 @@ const fastify = Fastify({
         sessionMiddleware(req, res, () => handler(req, res));
       })
       .on("upgrade", (req, socket, head) => {
-        // THIS IS THE FIX: Changed endsWith("/wisp/") to includes("/wisp") to survive Caddy routing
-        if (req.url.includes("/wisp")) {
+        if (req.url.endsWith("/wisp/")) {
           socket.setNoDelay(true);
           wisp.routeRequest(req, socket, head);
         } else {

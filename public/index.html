@@ -125,42 +125,41 @@
   <footer class="footer-bar"><span>Kairo &mdash; Private Browsing</span></footer>
 </div>
 
+<!-- Proxy view — bar sits on top, frame is fixed behind it -->
 <div id="proxy-view" style="display:none;position:fixed;inset:0;z-index:500;flex-direction:column;pointer-events:none;">
-  <div id="proxy-hit-zone" style="position:absolute;top:0;left:0;right:0;height:15px;pointer-events:all;z-index:501;"></div>
-  
-  <div id="proxy-controls" style="display:flex;flex-direction:column;pointer-events:all;transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);transform:translateY(-100%);">
-    <div class="proxy-bar" style="position:relative;gap:6px;pointer-events:all;">
-      <div id="top-progress"></div>
-      <button class="proxy-back" id="proxy-back-btn" title="Back">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
-      <button class="proxy-back" id="proxy-reload-btn" title="Reload">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
-      </button>
-      <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
-      </button>
-      <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-      </button>
-      <button class="proxy-back" id="proxy-home-btn" title="Home">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </button>
-    </div>
-    <div id="bookmark-bar" style="pointer-events:all;"></div>
+  <div class="proxy-bar" style="position:relative;gap:6px;pointer-events:all;">
+    <div id="top-progress"></div>
+    <button class="proxy-back" id="proxy-back-btn" title="Back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="proxy-back" id="proxy-fwd-btn" title="Forward">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <input id="proxy-url-bar" class="proxy-url-input" placeholder="Enter URL…" autocomplete="off" spellcheck="false"/>
+    <button class="proxy-back" id="proxy-reload-btn" title="Reload">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.07"/></svg>
+    </button>
+    <button class="proxy-back" id="bm-bar-toggle-btn" title="Toggle bookmarks">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>
+    </button>
+    <button class="proxy-back" id="proxy-fullscreen-btn" title="Fullscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+    <button class="proxy-back" id="proxy-home-btn" title="Home">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
   </div>
+  <div id="bookmark-bar" style="pointer-events:all;"></div>
 </div>
 
+<!-- Frame loader overlay -->
 <div id="frame-loader" style="display:none;position:fixed;inset:0;background:#07080a;z-index:492;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
   <div class="frame-loader-bar"><div class="frame-loader-fill"></div></div>
   <div class="frame-loader-text">Loading…</div>
   <div style="font-size:0.68rem;color:#353d4a;font-family:'DM Sans',sans-serif;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="frame-loader-url"></div>
 </div>
 
+<!-- Settings modal -->
 <div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.85);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
   <div style="background:#0e1014;border:1px solid #1c2028;border-radius:18px;padding:28px;width:100%;max-width:400px;margin:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
@@ -194,6 +193,7 @@
   </div>
 </div>
 
+<!-- Inactivity overlay -->
 <div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,8,10,0.96);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:#e8ecf0;">Session expired</div>
   <div style="font-size:0.85rem;color:#5a6370;">You were inactive for 20 minutes</div>
@@ -228,35 +228,24 @@ function finishProgress(){
   if(loader)setTimeout(function(){loader.classList.add("hidden");setTimeout(function(){loader.style.display="none";},300);},250);
 }
 
-// ── Scramjet (THE FIX) ────────────────────────────────
+// ── Scramjet ──────────────────────────────────────────────
 function initScramjet(){
   try{
     if(typeof $scramjetLoadController!=="function")return;
     var ctrl=$scramjetLoadController();
-    scramjet=new ctrl.ScramjetController({
-      prefix: "/proxy/", // THIS CANNOT BE "/scram/" OR IT CRASHES
-      files:{
-        wasm:   "/scram/scramjet.wasm", 
-        worker: "/scram/scramjet.worker.js",
-        client: "/scram/scramjet.client.js",
-        all:    "/scram/scramjet.all.js",
-        sync:   "/scram/scramjet.sync.js"
-      }
-    });
+    scramjet=new ctrl.ScramjetController({files:{wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"}});
     scramjet.init();
   }catch(e){console.error("[Kairo] SJ:",e);}
 }
-// ── BareMux (UPGRADED TO EPOXY) ───────────────────────────
+
+// ── BareMux ───────────────────────────────────────────────
 function getConn(){
   if(!connection)try{connection=new BareMux.BareMuxConnection("/baremux/worker.js");}catch(e){return null;}
   return connection;
 }
 function ensureTransport(){
   var c=getConn();if(!c)return Promise.resolve();
-  return c.getTransport().then(function(t){
-    // Upgraded from Libcurl to Epoxy. Epoxy is fully stable and doesn't crash if headers are blocked!
-    if(t!=="/epoxy/index.mjs") return c.setTransport("/epoxy/index.mjs",[{wisp:WISP_URL}]);
-  }).catch(function(e){console.error("Transport failed:", e)});
+  return c.getTransport().then(function(t){if(t!=="/libcurl/index.mjs")return c.setTransport("/libcurl/index.mjs",[{websocket:WISP_URL}]);}).catch(function(){});
 }
 
 // ── SW ────────────────────────────────────────────────────
@@ -291,40 +280,18 @@ function openProxy(url){
   try{
     var frame=scramjet.createFrame();
     frame.frame.id="sj-frame";
-    // Frame fills full viewport behind the bar overlay
-    frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:#fff;display:block;";
+    // transparent bg — white was causing black flash
+    frame.frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:none;z-index:490;background:transparent;display:block;";
     document.body.appendChild(frame.frame);
     currentFrame=frame;
-    
-    // Show bar overlay
     document.getElementById("proxy-view").style.display="flex";
     document.getElementById("home").style.display="none";
     document.getElementById("proxy-url-bar").value=url;
-    
-    // Briefly show the proxy bar, then slide it up
-    var proxyControls = document.getElementById("proxy-controls");
-    proxyControls.style.transform = "translateY(0)";
-    setTimeout(function() {
-      if (!proxyControls.matches(':hover')) {
-        proxyControls.style.transform = "translateY(-100%)";
-      }
-    }, 2000);
-
-    // --- The Infinite Loader Fix ---
-    var isLoaded = false;
-    var markDone = function() {
-      if (isLoaded) return;
-      isLoaded = true;
-      finishProgress();
-    };
-    
-    // 1. Try to catch the normal load event
-    frame.frame.addEventListener("load", markDone);
-    
-    // 2. If the site blocks it, force it to clear after 3.5 seconds
-    setTimeout(markDone, 3500);
-    // -------------------------------
-
+    // White body so transparent frame doesn't show dark background
+    document.body.style.background="#fff";
+    // Save URL so F5 browser refresh restores it
+    try{sessionStorage.setItem("kairo_last_url",url);}catch(e){}
+    frame.frame.addEventListener("load",function(){finishProgress();});
     frame.go(url);
     saveServerCookies();
   }catch(e){finishProgress();showError("Failed: "+e.message);}
@@ -333,8 +300,9 @@ function openProxy(url){
 function closeProxy(){
   if(currentFrame){try{currentFrame.frame.remove();}catch(e){}currentFrame=null;}
   document.getElementById("proxy-view").style.display="none";
-  document.getElementById("proxy-controls").style.transform="translateY(-100%)";
   document.getElementById("home").style.display="block";
+  document.body.style.background="";
+  try{sessionStorage.removeItem("kairo_last_url");}catch(e){}
   var loader=document.getElementById("frame-loader");
   if(loader){loader.classList.remove("hidden");loader.style.display="none";}
 }
@@ -342,39 +310,19 @@ function closeProxy(){
 function showError(msg){document.getElementById("error-msg").textContent=msg||"Something went wrong.";document.getElementById("error-toast").style.display="flex";}
 function hideError(){document.getElementById("error-toast").style.display="none";}
 
-// ── Proxy UI Logic ────────────────────────────────────────
-document.getElementById("proxy-hit-zone").addEventListener("mouseenter", function() {
-  document.getElementById("proxy-controls").style.transform = "translateY(0)";
-});
-document.getElementById("proxy-controls").addEventListener("mouseleave", function() {
-  document.getElementById("proxy-controls").style.transform = "translateY(-100%)";
-});
-
 // ── Proxy bar buttons ─────────────────────────────────────
 document.getElementById("proxy-back-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.back();}catch(e){}});
 document.getElementById("proxy-fwd-btn").addEventListener("click",function(){try{currentFrame&&currentFrame.frame.contentWindow.history.forward();}catch(e){}});
 document.getElementById("proxy-reload-btn").addEventListener("click",function(){
   if(!currentFrame)return;var url=document.getElementById("proxy-url-bar").value;startProgress(url);
-  try{
-    currentFrame.frame.contentWindow.location.reload();
-    setTimeout(finishProgress, 3500); // safety fallback
-  }catch(e){
-    currentFrame.go(url);
-    setTimeout(finishProgress, 3500); // safety fallback
-  }
+  try{currentFrame.frame.contentWindow.location.reload();}catch(e){currentFrame.go(url);}
 });
 document.getElementById("proxy-home-btn").addEventListener("click",closeProxy);
 document.getElementById("proxy-url-bar").addEventListener("keydown",function(e){
   if(e.key!=="Enter")return;
   var val=typeof search==="function"?search(this.value.trim(),SEARCH_ENGINE):this.value.trim();
   if(val.startsWith("http://"))val=val.replace("http://","https://");val=addGeo(val);
-  startProgress(val);ensureTransport().then(function(){
-    if(currentFrame){
-      currentFrame.go(val);
-      document.getElementById("proxy-url-bar").value=val;
-      setTimeout(finishProgress, 3500); // safety fallback
-    }
-  });
+  startProgress(val);ensureTransport().then(function(){if(currentFrame){currentFrame.go(val);document.getElementById("proxy-url-bar").value=val;}});
 });
 
 // ── Fullscreen ────────────────────────────────────────────
@@ -535,21 +483,16 @@ Promise.all([
   resetTimer();setInterval(saveServerCookies,15000);
   window.addEventListener("beforeunload",saveServerCookies);
   showUI();
+  // F5 restore — if user was on a proxied page before, reload it
+  try{
+    var lastUrl=sessionStorage.getItem("kairo_last_url");
+    if(lastUrl){
+      sessionStorage.removeItem("kairo_last_url");
+      // Small delay to let scramjet fully init
+      setTimeout(function(){ goTo(lastUrl); }, 800);
+    }
+  }catch(e){}
 }).catch(function(){location.href="/login.html";});
 </script>
-
-<script type="module">
-  import { BareMuxConnection } from '/baremux/index.mjs';
-
-  // Connect to the BareMux worker
-  const connection = new BareMuxConnection('/baremux/worker.js');
-
-  // Dynamically build the Wisp URL so it never uses wss:// on http://
-  const wispUrl = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/";
-
-  // Mount Epoxy and feed it the Wisp URL (THIS FIXES LIBCURL)
-  connection.setTransport('/epoxy/index.mjs', [{ wisp: wispUrl }]);
-</script>
-  
 </body>
 </html>
